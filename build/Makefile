@@ -16,6 +16,8 @@ ASM_OBJ_BOOTLOADER_MAIN=$(addsuffix .bootldr.o, $(ASM_SRC_BOOTLOADER_MAIN))
 
 C_SRC_KERNEL_MAIN=$(shell find ../kernel/source -name *.c)
 C_OBJ_KERNEL_MAIN=$(addsuffix .kernel.o, $(C_SRC_KERNEL_MAIN))
+ASM_SRC_KERNEL_MAIN=$(shell find ../kernel/source -name *.asm)
+ASM_OBJ_KERNEL_MAIN=$(addsuffix .kernel.o, $(ASM_SRC_KERNEL_MAIN))
 
 all:
 	$(MAKE) build
@@ -25,7 +27,8 @@ all:
 
 build:
 	$(MAKE) $(C_OBJ_KERNEL_MAIN)
-	$(COMPILER) $(C_OBJ_KERNEL_MAIN) $(LINKER_KERNEL_FLAGS) -o kernel.bin
+	$(MAKE) $(ASM_OBJ_KERNEL_MAIN)
+	$(COMPILER) $(C_OBJ_KERNEL_MAIN) $(ASM_OBJ_KERNEL_MAIN) $(LINKER_KERNEL_FLAGS) -o kernel.bin
 
 	$(MAKE) $(C_OBJ_BOOTLOADER_MAIN)
 	$(MAKE) $(ASM_OBJ_BOOTLOADER_MAIN)
@@ -46,7 +49,7 @@ bochsdbg:
 	$(BOCHSDBG) -qf win32-bochsrc.bxrc
 
 clear:
-	rm -f bootloader-main.bin kernel.bin $(C_OBJ_BOOTLOADER_MAIN) $(ASM_OBJ_BOOTLOADER_MAIN) $(C_OBJ_KERNEL_MAIN)
+	rm -f bootloader-main.bin kernel.bin $(C_OBJ_BOOTLOADER_MAIN) $(ASM_OBJ_BOOTLOADER_MAIN) $(C_OBJ_KERNEL_MAIN) $(ASM_OBJ_KERNEL_MAIN)
 
 %.c.bootldr.o:	%.c
 	$(COMPILER) -c $< $(COMPILER_BOOTLOADER_FLAGS) -o $@
@@ -56,3 +59,6 @@ clear:
 
 %.c.kernel.o:	%.c
 	$(COMPILER) -c $< $(COMPILER_KERNEL_FLAGS) -o $@
+
+%.asm.kernel.o:	%.asm
+	nasm -felf $< -o $@
