@@ -1,7 +1,7 @@
 #include <terminal.h>
 
 static const char HorizontalTabString[] = "    ";
-static const char VerticalTabString[] = "\r\n\n\n\n";
+static const char VerticalTabString[] = "\n\n\n\n";
 static char ConvBuffer[INT_TO_STR_BUFF_LENGTH];
 
 void PutString(const char* str) {

@@ -22,6 +22,10 @@ typedef struct ATTRIB(__packed__) KernelHeader {
 typedef struct ATTRIB(__packed__) KernelInitializationData {
 	uint32_t	MemoryMapAddress;
 	uint32_t	MemoryMapLength;
+	uint32_t	GdtAddress;
+	uint32_t	GdtEntriesCount;
+	uint32_t	GdtCodeSegIndex;
+	uint32_t	GdtDataSegIndex;
 } KernelInitializationData;
 
 extern GdtRegister KernelGdtRegister;

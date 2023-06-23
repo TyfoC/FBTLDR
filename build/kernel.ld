@@ -34,5 +34,10 @@ SECTIONS {
 		. = ALIGN(512);
 	}
 
+	.padding : ALIGN(512) {
+		SHORT(0x9060);
+		. = ALIGN(512);
+	}
+
 	__PTR_KERNEL_END_ADDRESS__ = .;
 }

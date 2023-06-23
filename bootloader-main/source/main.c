@@ -76,6 +76,10 @@ extern void BootloaderMain(uint8_t diskIndex, uint16_t kernelSectorLba) {
 		STOP_EXECUTION();
 	}
 
+	kernelInitData->GdtAddress = (uint32_t)&KernelGdt[0];
+	kernelInitData->GdtEntriesCount = KERNEL_GDT_ENTRIES_COUNT;
+	kernelInitData->GdtCodeSegIndex = KERNEL_GDT_CODE_SEG_INDEX;
+	kernelInitData->GdtDataSegIndex = KERNEL_GDT_DATA_SEG_INDEX;
 	PrintFormatted("\tMemory map address: 0x%x, entries count: 0x%x\r\n", (uint32_t)((memoryMapSeg << 4) | memoryMapOff), kernelInitData->MemoryMapLength);
 
 	PutString("[INFO] Jumping into kernel...\r\n");
