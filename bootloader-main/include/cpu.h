@@ -9,7 +9,8 @@ void SwitchToProtectedMode(
 	uint32_t returnAddress,
 	uint16_t codeSegOff,
 	uint16_t dataSegOff,
-	uint32_t stackTopAddress
+	uint32_t stackTopAddress,
+	uint32_t dataAddress
 );
 
 #endif

@@ -18,10 +18,10 @@ C_SRC_KERNEL_MAIN=$(shell find ../kernel/source -name *.c)
 C_OBJ_KERNEL_MAIN=$(addsuffix .kernel.o, $(C_SRC_KERNEL_MAIN))
 
 all:
-	rm -f $(OUT)
 	$(MAKE) build
-	$(MAKE) qemu
 	$(MAKE) clear
+	$(MAKE) qemu
+	rm -f dbg.txt
 
 build:
 	$(MAKE) $(C_OBJ_KERNEL_MAIN)
@@ -46,7 +46,7 @@ bochsdbg:
 	$(BOCHSDBG) -qf win32-bochsrc.bxrc
 
 clear:
-	rm -f *.txt bootloader-main.bin kernel.bin $(C_OBJ_BOOTLOADER_MAIN) $(ASM_OBJ_BOOTLOADER_MAIN) $(C_OBJ_KERNEL_MAIN)
+	rm -f bootloader-main.bin kernel.bin $(C_OBJ_BOOTLOADER_MAIN) $(ASM_OBJ_BOOTLOADER_MAIN) $(C_OBJ_KERNEL_MAIN)
 
 %.c.bootldr.o:	%.c
 	$(COMPILER) -c $< $(COMPILER_BOOTLOADER_FLAGS) -o $@

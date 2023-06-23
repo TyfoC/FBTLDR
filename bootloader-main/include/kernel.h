@@ -12,12 +12,17 @@
 #define KERNEL_GDT_CODE_SEG_OFF			0x08
 #define KERNEL_GDT_DATA_SEG_OFF			0x10
 
-typedef struct ATTRIB(__packed__) {
+typedef struct ATTRIB(__packed__) KernelHeader {
 	uint32_t	BaseAddress;
 	uint32_t	FileLength;
 	uint32_t	EntryPoint;
 	uint32_t	StackTopAddress;
 } KernelHeader;
+
+typedef struct ATTRIB(__packed__) KernelInitializationData {
+	uint32_t	MemoryMapAddress;
+	uint32_t	MemoryMapLength;
+} KernelInitializationData;
 
 extern GdtRegister KernelGdtRegister;
 extern GdtEntry KernelGdt[KERNEL_GDT_ENTRIES_COUNT];

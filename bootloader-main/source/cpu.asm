@@ -8,6 +8,7 @@ SwitchToProtectedMode:
 	mov bx, [esp + 16]		;	data segment
 	mov ebp, [esp + 20]		;	stack top address
 	sub ebp, 4				;	prevent data corruption
+	mov esi, [esp + 24]		;	data address
 	cli
 	lgdt [eax]
 	mov eax, cr0
@@ -24,5 +25,7 @@ bits 32
 	mov gs, bx
 	mov ss, bx
 	mov esp, ebp
+	push esi
+	push 0
 	jmp ecx
 bits 16
