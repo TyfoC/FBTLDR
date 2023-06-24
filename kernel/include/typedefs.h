@@ -6,6 +6,7 @@
 #define ALIGN_DOWN($value, $alignment)	(($value) & ~(($alignment) - 1))
 #define ATTRIB(...)						__attribute__((__VA_ARGS__))
 #define ASM(...)						__asm__ __volatile__(__VA_ARGS__)
+#define STOP_EXECUTION(...)				ASM("jmp ."::__VA_ARGS__)
 
 #define FALSE							0
 #define TRUE							1

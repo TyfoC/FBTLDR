@@ -5,26 +5,21 @@ extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 	CopyMemory(KernelGDT, initData->GDTPointer, sizeof(GDT_ENTRY) * KERNEL_GDT_ENTRIES_COUNT);
 	InitGDTRegister(KernelGDT, KERNEL_GDT_ENTRIES_COUNT, &KernelGDTRegister);
 	LoadGDTRegister(&KernelGDTRegister);
+	KernelCodeSegValue = GetCodeSegValue();
+	KernelDataSegValue = GetDataSegValue();
+	InitIDTRegister(KernelIDT, KERNEL_IDT_ENTRIES_COUNT, &KernelIDTRegister);
+	LoadIDTRegister(&KernelIDTRegister);
+	InitSoftwareIntHandlers(KernelIDT, KernelCodeSegValue);
 
-	PrintFormatted(
-		"[%aINFO%r] Kernel loaded, received information from the bootloader:\r\n",
-		BIOS_COLOR_WHITE, BIOS_COLOR_LIGHT_GREEN
-	);
+	ASM("int $0x00");
 
-	PrintFormatted("\tGDT:\tAddress: 0x%xu, Entries count: %u\r\n", BIOS_COLOR_WHITE, &KernelGDT[0], KERNEL_GDT_ENTRIES_COUNT);
-	for (SIZE_T i = 0; i < KERNEL_GDT_ENTRIES_COUNT; i++) {
-		PrintFormatted(
-			"\t\t%u) Base: 0x%xu, Limit: 0x%xu, Access: 0x%xu, Flags: 0x%xu\r\n", BIOS_COLOR_WHITE,
-			i + 1,
-			KernelGDT[i].BaseLow | (KernelGDT[i].BaseHigh << 24),
-			KernelGDT[i].LimitLow | (KernelGDT[i].LimitHigh << 16),
-			KernelGDT[i].Access,
-			KernelGDT[i].Flags
-		);
-	}
-
-	while (1);
+	PutString("End...", BIOS_COLOR_YELLOW);
+	STOP_EXECUTION();
 }
 
 GDT_REGISTER KernelGDTRegister;
-GDT_ENTRY KernelGDT[KERNEL_GDT_ENTRIES_COUNT];
+GDT_ENTRY KernelGDT[KERNEL_GDT_ENTRIES_COUNT] = {};
+IDT_REGISTER KernelIDTRegister;
+IDT_ENTRY KernelIDT[KERNEL_IDT_ENTRIES_COUNT] = {};
+UINT16 KernelCodeSegValue;
+UINT16 KernelDataSegValue;
