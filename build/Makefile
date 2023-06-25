@@ -1,7 +1,7 @@
 COMPILER=i686-elf-gcc
 BOCHS=/mnt/c/Installed\ Programs/Bochs-2.7/bochs.exe	# NOT COMMON!
 BOCHSDBG=/mnt/c/Installed\ Programs/Bochs-2.7/bochsdbg.exe	# NOT COMMON!
-OUT=fobo.bin
+OUT=FBTLDR.bin
 
 COMPILER_BOOTLOADER_FLAGS=-ffreestanding -m16 -std=c17 -Wall -Wextra -O0 -I ../bootloader-main/include
 LINKER_BOOTLOADER_FLAGS=-ffreestanding -m16 -nostdlib -O0 -T bootloader-main.ld
@@ -49,7 +49,7 @@ bochsdbg:
 	$(BOCHSDBG) -qf win32-bochsrc.bxrc
 
 clear:
-	rm -f bootloader-main.bin kernel.bin $(C_OBJ_BOOTLOADER_MAIN) $(ASM_OBJ_BOOTLOADER_MAIN) $(C_OBJ_KERNEL_MAIN) $(ASM_OBJ_KERNEL_MAIN)
+	rm -f *.txt bootloader-main.bin kernel.bin $(C_OBJ_BOOTLOADER_MAIN) $(ASM_OBJ_BOOTLOADER_MAIN) $(C_OBJ_KERNEL_MAIN) $(ASM_OBJ_KERNEL_MAIN)
 
 %.c.bootldr.o:	%.c
 	$(COMPILER) -c $< $(COMPILER_BOOTLOADER_FLAGS) -o $@
