@@ -24,7 +24,7 @@
 
 #define PIC_COMMAND_EOI			0x20		//	end of interrupt
 
-VOID SendCommandToPIC(UINT8 vectorIndex, UINT8 command);
+VOID ATTRIB_PACKEDToPIC(UINT8 vectorIndex, UINT8 command);
 VOID RemapPIC(UINT8 masterVectorOffset, UINT8 slaveVectorOffset);
 VOID MaskPICIRQ(UINT8 irqIndex);
 VOID UnmaskPICIRQ(UINT8 irqIndex);
