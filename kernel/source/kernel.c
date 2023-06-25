@@ -34,16 +34,6 @@ extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 		);
 	}
 
-	VOID* fmem = AllocatePhysicalMemory(0x40000);
-	VOID* smem = AllocatePhysicalMemory(0x100000);
-	PrintFormatted("1 - 0x%xu, 2 - 0x%xu\r\n", BIOS_COLOR_WHITE, fmem, smem);
-	PrintFormatted("FreedPgCnt: 0x%xu\r\n", BIOS_COLOR_WHITE, FreePhysicalMemory(fmem));
-	fmem = AllocatePhysicalMemory(0x40000);
-	smem = ReallocatePhysicalMemory(smem, 0x1000);
-	PrintFormatted("1 - 0x%xu, 2 - 0x%xu\r\n", BIOS_COLOR_WHITE, fmem, smem);
-	FreePhysicalMemory(fmem);
-	FreePhysicalMemory(smem);
-
 	//	GDT, KernelCodeSegValue, KernelDataSegValue
 	InitGDTRegister(KernelGDT, KERNEL_GDT_ENTRIES_COUNT, &KernelGDTRegister);
 	LoadGDTRegister(&KernelGDTRegister);
