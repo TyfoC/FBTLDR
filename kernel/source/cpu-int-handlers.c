@@ -200,5 +200,5 @@ extern VOID HardwareInterruptHandler(INT_HANDLER_REGISTERS* registers) {
 		);
 	}
 
-	SendCommandToPIC(intIndex, PIC_COMMAND_EOI);
+	PICSendCommandToPIC(intIndex, PIC_COMMAND_EOI);
 }

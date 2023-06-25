@@ -1,6 +1,6 @@
 #include <pic.h>
 
-VOID SendCommandToPIC(UINT8 vectorIndex, UINT8 command) {
+VOID PICSendCommandToPIC(UINT8 vectorIndex, UINT8 command) {
 	if (vectorIndex >= 8) OutByte(PIC_SLAVE_PORT_COMMAND, command);
 	OutByte(PIC_MASTER_PORT_COMMAND, command);
 }

@@ -73,6 +73,19 @@
 #define PS2_CTRL_RESPONSE_RESET_PASSED					0xFA
 #define PS2_CTRL_RESPONSE_RESET_FAILED					0xFC
 
-VOID
+VOID PS2CtrlInit(VOID);
+VOID PS2CtrlSendCommand(UINT8 value);
+VOID PS2CtrlSendData(UINT8 value);
+UINT8 PS2CtrlReceiveAnswer(VOID);
+BOOL PS2CtrlFirstPortAvailable(VOID);
+BOOL PS2CtrlSecondPortAvailable(VOID);
+BOOL PS2CtrlReadyToSend(VOID);
+BOOL PS2CtrlRadyToReceive(VOID);
+VOID PS2CtrlWaitUntilReadyToSend(VOID);
+VOID PS2CtrlWaitUntilReadyToReceive(VOID);
+VOID PS2CtrlLockInput(VOID);
+VOID PS2CtrlUnlockInput(VOID);
+VOID PS2CtrlFlushBuffer(VOID);
+VOID PS2CtrlReboot(VOID);
 
 #endif
