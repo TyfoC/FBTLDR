@@ -1,10 +1,10 @@
 #include <memory.h>
 
 static MEMORY_REGION_DESCRIPTOR* Regions;
-static SIZE_T RegionsCount = 0;
+static SIZE_T NumberOfRegions = 0;
 
 static MEMORY_ALLOCATION_DATA* Allocations = 0;
-static SIZE_T AllocationCount = 0;
+static SIZE_T NumberOfAllocations = 0;
 static MEMORY_ALLOCATION_DATA AllocData = { 0, 0, NPOS, NPOS };
 
 VOID InitPMM(MEMORY_REGION_DESCRIPTOR* regs, SIZE_T count) {
@@ -13,11 +13,11 @@ VOID InitPMM(MEMORY_REGION_DESCRIPTOR* regs, SIZE_T count) {
 	};
 
 	Regions = regs;
-	RegionsCount = RemoveMemoryRegions(Regions, &memMapReg, count, 1);
+	NumberOfRegions = RemoveMemoryRegions(Regions, &memMapReg, count, 1);
 
 	SIZE_T dataAddr, j;
 	MEMORY_FRAME_DESCRIPTOR* frameDescr;
-	for (SIZE_T i = 0; i < RegionsCount; i++) {
+	for (SIZE_T i = 0; i < NumberOfRegions; i++) {
 		if (Regions[i].Type == MEMORY_REGION_TYPE_USABLE || Regions[i].Type == MEMORY_REGION_TYPE_RECLAIMABLE) {
 			frameDescr = (MEMORY_FRAME_DESCRIPTOR*)(((SIZE_T)Regions[i].Address));
 			dataAddr = Regions[i].Address + ALIGN_UP(Regions[i].Length * sizeof(MEMORY_FRAME_DESCRIPTOR), MEMORY_FRAME_SIZE);
@@ -143,18 +143,18 @@ SIZE_T RemoveMemoryRegions(MEMORY_REGION_DESCRIPTOR* regs, const MEMORY_REGION_D
 }
 
 SIZE_T GetMemoryMapLength(VOID) {
-	return RegionsCount;
+	return NumberOfRegions;
 }
 
 VOID GetMemoryRegion(SIZE_T index, MEMORY_REGION_DESCRIPTOR* mrd) {
-	*mrd = index >= RegionsCount ? (MEMORY_REGION_DESCRIPTOR){} : Regions[index];
+	*mrd = index >= NumberOfRegions ? (MEMORY_REGION_DESCRIPTOR){} : Regions[index];
 }
 
 VOID* AllocatePhysicalMemory(SIZE_T count) {
 	MEMORY_ALLOCATION_DATA allocData = AllocatePhysicalFrames(count);
 	if (allocData.RegionIndex == NPOS && allocData.FrameIndex == NPOS) return 0;
 
-	SIZE_T unalignedSize = sizeof(Allocations[0]) * AllocationCount;
+	SIZE_T unalignedSize = sizeof(Allocations[0]) * NumberOfAllocations;
 	SIZE_T curSize = ALIGN_UP(unalignedSize, MEMORY_FRAME_SIZE);
 	SIZE_T nextSize = ALIGN_UP(unalignedSize + sizeof(Allocations[0]), MEMORY_FRAME_SIZE);
 	if (nextSize > curSize) {
@@ -168,8 +168,8 @@ VOID* AllocatePhysicalMemory(SIZE_T count) {
 		Allocations = (MEMORY_ALLOCATION_DATA*)tmp.DataAddress;
 	}
 
-	Allocations[AllocationCount] = allocData;
-	++AllocationCount;
+	Allocations[NumberOfAllocations] = allocData;
+	++NumberOfAllocations;
 
 	return (VOID*)allocData.DataAddress;
 }
@@ -190,15 +190,15 @@ SIZE_T FreePhysicalMemory(VOID* memory) {
 	MEMORY_ALLOCATION_DATA tmpAlcData;
 	SIZE_T unalignedSize, curSize, nextSize;
 
-	for (SIZE_T i = 0; i < AllocationCount; i++) {
+	for (SIZE_T i = 0; i < NumberOfAllocations; i++) {
 		if (Allocations[i].DataAddress == (SIZE_T)memory) {
 			tmpAlcData = Allocations[i];
-			if (AllocationCount - 1) CopyMemory(
+			if (NumberOfAllocations - 1) CopyMemory(
 				&Allocations[i], &Allocations[i + 1],
-				sizeof(MEMORY_ALLOCATION_DATA) * (AllocationCount - i - 1)
+				sizeof(MEMORY_ALLOCATION_DATA) * (NumberOfAllocations - i - 1)
 			);
 
-			unalignedSize = sizeof(Allocations[0]) * AllocationCount;
+			unalignedSize = sizeof(Allocations[0]) * NumberOfAllocations;
 			curSize = ALIGN_UP(unalignedSize, MEMORY_FRAME_SIZE);
 			nextSize = ALIGN_UP(unalignedSize - sizeof(Allocations[0]), MEMORY_FRAME_SIZE);
 
@@ -210,7 +210,7 @@ SIZE_T FreePhysicalMemory(VOID* memory) {
 				Allocations = (MEMORY_ALLOCATION_DATA*)tmp.DataAddress;
 			}
 
-			AllocationCount -= 1;
+			NumberOfAllocations -= 1;
 			return FreePhysicalFrames(&tmpAlcData);
 		}
 	}
@@ -226,7 +226,7 @@ MEMORY_ALLOCATION_DATA AllocatePhysicalFrames(SIZE_T bytesCount) {
 	BOOL framesFree;
 	MEMORY_FRAME_DESCRIPTOR* frameDescriptors;
 
-	for (SIZE_T i = 0; i < RegionsCount; i++) {
+	for (SIZE_T i = 0; i < NumberOfRegions; i++) {
 		if (Regions[i].Type != MEMORY_REGION_TYPE_USABLE && Regions[i].Type != MEMORY_REGION_TYPE_RECLAIMABLE) continue;
 
 		frameDescriptors = (MEMORY_FRAME_DESCRIPTOR*)Regions[i].Address;
