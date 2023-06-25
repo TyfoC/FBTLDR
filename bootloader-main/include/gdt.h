@@ -18,12 +18,12 @@
 #define GDT_FLAG_PROTECTED_MODE	0x04
 #define GDT_FLAG_4KB_PAGES		0x08
 
-typedef struct ATTRIB(__packed__) {
+typedef struct ATTRIB_PACKED {
 	uint16_t	Size;
 	uint32_t	Offset;
 } GdtRegister;
 
-typedef struct ATTRIB(__packed__) {
+typedef struct ATTRIB_PACKED {
 	uint16_t	LimitLow;
 	uint16_t	BaseLow;
 	uint8_t		BaseMiddle;

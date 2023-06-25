@@ -27,13 +27,6 @@ extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 	InitPMM(memMap, memMapLen);
 	memMapLen = GetMemoryMapLength();
 
-	for (SIZE_T i = 0; i < memMapLen; i++) {
-		PrintFormatted(
-			"%u) Addr: 0x%xu, Size: 0x%xu, Type: 0x%xu, PgCnt: 0x%xu\r\n", BIOS_COLOR_YELLOW,
-			i + 1, memMap[i].Address, memMap[i].Size, memMap[i].Type, memMap[i].Length
-		);
-	}
-
 	//	GDT, KernelCodeSegValue, KernelDataSegValue
 	InitGDTRegister(KernelGDT, KERNEL_GDT_ENTRIES_COUNT, &KernelGDTRegister);
 	LoadGDTRegister(&KernelGDTRegister);
@@ -52,13 +45,40 @@ extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 	//	PIT
 	InitPIT(PIT_SOFTWARE_FREQUENCY);
 
-	for (SIZE_T i = 0; i < 5; i++) {
-		Sleep(1000);
-		PutString("One second passed\r\n", BIOS_COLOR_WHITE);
+	//	ACPI
+	UINT8 acpiVerMajor, acpiVerMinor;
+	UINT16 bootArchFlags;
+	if (!InitACPI()) PutString("Warning: failed to initialize ACPI driver, further work may lead to failures!\r\n", BIOS_COLOR_YELLOW);
+	else {
+		acpiVerMajor = GetACPIMajorVersion();
+		acpiVerMinor = GetACPIMinorVersion();
+		bootArchFlags = GetBootArchitectureFlags();
+		PrintFormatted("ACPI version: %u.%u\r\n", BIOS_COLOR_WHITE, acpiVerMajor, acpiVerMinor & 0x03);
+		
+		if (acpiVerMajor >= 2 && !(bootArchFlags & BOOT_ARCH_FLAG_8042)) {
+			PutString("Error: PS/2 keyboard not found! User input not possible!\r\n", BIOS_COLOR_LIGHT_RED);
+			ShutdownKernel(5);
+		}
 	}
 
-	PutString("Done\r\n", BIOS_COLOR_YELLOW);
+	ShutdownKernel(5);
 	STOP();
+}
+
+VOID ShutdownKernel(SIZE_T secondsCount) {
+	PutString("Shutdown after ", BIOS_COLOR_YELLOW);
+	SIZE_T cursorOffset = GetCursorOffset();
+	for (SIZE_T i = 0; i < secondsCount; i++) {
+		PrintFormatted("%u %aseconds...", BIOS_COLOR_LIGHT_BLUE, secondsCount - i, BIOS_COLOR_YELLOW);
+		Sleep(1000);
+		SetCursorOffset(cursorOffset);
+	}
+
+	if (!ACPIPowerOff()) {
+		PutString("Shutdown failed!\r\n", BIOS_COLOR_LIGHT_RED);
+		HLT();
+	}
+	else PutString("Shutdown successfull!\r\n", BIOS_COLOR_LIGHT_GREEN);
 }
 
 GDT_REGISTER KernelGDTRegister;

@@ -27,12 +27,12 @@
 
 #define MAX_IDT_ENTRIES_COUNT				0x0100
 
-typedef struct ATTRIB(__packed__) GDT_REGISTER {
+typedef struct ATTRIB_PACKED GDT_REGISTER {
 	UINT16	Size;
 	UINT32	Offset;
 } GDT_REGISTER;
 
-typedef struct ATTRIB(__packed__) GDT_ENTRY {
+typedef struct ATTRIB_PACKED GDT_ENTRY {
 	UINT16	LimitLow;
 	UINT32	BaseLow							:24;
 	UINT8	Access;												//	GDT_ENTRY_ACCESS_*
@@ -41,12 +41,12 @@ typedef struct ATTRIB(__packed__) GDT_ENTRY {
 	UINT8	BaseHigh;
 } GDT_ENTRY;
 
-typedef struct ATTRIB(__packed__) IDT_REGISTER {
+typedef struct ATTRIB_PACKED IDT_REGISTER {
 	UINT16	Size;
 	UINT32	Offset;
 } IDT_REGISTER;
 
-typedef struct ATTRIB(__packed__) IDT_ENTRY {
+typedef struct ATTRIB_PACKED IDT_ENTRY {
 	UINT16				BaseLow;
 	SEGMENT_SELECTOR	CodeSegSelector;
 	UINT8				Reserved;

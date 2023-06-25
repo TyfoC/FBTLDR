@@ -303,3 +303,10 @@ VOID FillMemory(VOID* destination, UINT8 value, SIZE_T count) {
 	UINT8* dstBuff = (UINT8*)destination;
 	for (SIZE_T i = 0; i < count; i++) dstBuff[i] = value;
 }
+
+BOOL CompareMemory(const VOID* first, const VOID* second, SIZE_T count) {
+	UINT8* first8 = (UINT8*)first;
+	UINT8* second8 = (UINT8*)second;
+	for (SIZE_T i = 0; i < count; i++) if (first8[i] != second8[i]) return FALSE;
+	return TRUE;
+}

@@ -5,6 +5,7 @@
 #include "terminal.h"
 #include "pic.h"
 #include "pit.h"
+#include "acpi.h"
 
 #define KERNEL_BASE_ADDRESS							((SIZE_T)&__PTR_KERNEL_BASE_ADDRESS__)
 #define KERNEL_END_ADDRESS							((SIZE_T)&__PTR_KERNEL_END_ADDRESS__)
@@ -17,7 +18,7 @@
 #define PCI_SUPPORT_SECOND_CONFIG_ACCESS_MECHANISM	0x02
 #define PCI_SUPPORT_CHECK_COMPLETED_SUCCESSFULLY	0x04
 
-typedef struct ATTRIB(__packed__) KERNEL_INIT_DATA {
+typedef struct ATTRIB_PACKED KERNEL_INIT_DATA {
 	UINT32		MemoryMapAddress;
 	UINT32		MemoryMapLength;
 	GDT_ENTRY*	GDTPointer;
@@ -29,6 +30,8 @@ typedef struct ATTRIB(__packed__) KERNEL_INIT_DATA {
 
 extern SIZE_T __PTR_KERNEL_BASE_ADDRESS__;
 extern SIZE_T __PTR_KERNEL_END_ADDRESS__;
+
+VOID ShutdownKernel(SIZE_T secondsCount);
 
 extern GDT_REGISTER ATTRIB(__aligned__(16)) KernelGDTRegister;
 extern GDT_ENTRY ATTRIB(__aligned__(16)) KernelGDT[KERNEL_GDT_ENTRIES_COUNT];

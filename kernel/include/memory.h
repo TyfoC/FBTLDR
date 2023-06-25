@@ -19,27 +19,27 @@
 #define MEMORY_FRAME_SIZE							0x1000
 #define MEMORY_FRAME_FLAG_BUSY						0x01
 
-typedef struct ATTRIB(__packed__) {
+typedef struct ATTRIB_PACKED {
 	UINT64	BaseAddress;
 	UINT64	Length;
 	UINT32	Type;
 	UINT32	ExtendedAttributes;
 } ADDRESS_RANGE_DESCRIPTOR;
 
-typedef struct ATTRIB(__packed__) {
+typedef struct ATTRIB_PACKED {
 	SIZE_T	Address;					//	address of MEMORY_FRAME_DESCRIPTOR[]
 	SIZE_T	Size;						//	memory region size in bytes
 	SIZE_T	Type;
 	SIZE_T	Length;						//	count of MEMORY_FRAME_DESCRIPTOR
 } MEMORY_REGION_DESCRIPTOR;
 
-typedef struct ATTRIB(__packed__) {
+typedef struct ATTRIB_PACKED {
 	SIZE_T	DataOffset;					//	data offset from this MEMORY_FRAME_DESCRIPTOR
 	SIZE_T	BusyFramesCount;
 	SIZE_T	Flags;						//	MEMORY_FRAME_FLAG_*
 } MEMORY_FRAME_DESCRIPTOR;
 
-typedef struct ATTRIB(__packed__) {
+typedef struct ATTRIB_PACKED {
 	SIZE_T	DataAddress;
 	SIZE_T	DataSize;
 	SIZE_T	RegionIndex;
@@ -61,5 +61,6 @@ MEMORY_ALLOCATION_DATA ReallocatePhysicalFrames(MEMORY_ALLOCATION_DATA* memAlloc
 SIZE_T FreePhysicalFrames(MEMORY_ALLOCATION_DATA* memAllocData);
 VOID CopyMemory(VOID* destination, const VOID* source, SIZE_T count);
 VOID FillMemory(VOID* destination, UINT8 value, SIZE_T count);
+BOOL CompareMemory(const VOID* first, const VOID* second, SIZE_T count);
 
 #endif

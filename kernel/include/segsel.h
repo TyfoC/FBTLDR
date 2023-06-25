@@ -4,7 +4,7 @@
 
 #include "typedefs.h"
 
-typedef struct ATTRIB(__packed__) {
+typedef struct ATTRIB_PACKED {
 	UINT8	RPL		:2;					//	requested privilege level
 	UINT8	TI		:1;					//	table index (0 - GDT, 1 - LDT)
 	UINT16	Index	:13;				//	entry index

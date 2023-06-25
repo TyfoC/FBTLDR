@@ -4,7 +4,10 @@
 
 #define ALIGN_UP($value, $alignment)	((($value) + ($alignment) - 1) & ~(($alignment) - 1))
 #define ALIGN_DOWN($value, $alignment)	(($value) & ~(($alignment) - 1))
+
 #define ATTRIB(...)						__attribute__((__VA_ARGS__))
+#define ATTRIB_PACKED					ATTRIB(__packed__)
+
 #define ASM(...)						__asm__ __volatile__(__VA_ARGS__)
 #define STOP(...)						ASM("jmp ."::__VA_ARGS__)
 #define HLT(...)				ASM("cli; hlt; jmp ."::__VA_ARGS__)
