@@ -15,7 +15,7 @@
 	+	[x] ISRs
 	+	[x] IRQs
 	+	[x] PMM
-	+	[ ] PIT
+	+	[x] PIT
 	+	[ ] RTC
 	+	[ ] HPET
 	+	[ ] Other stuff

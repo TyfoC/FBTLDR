@@ -1,0 +1,6 @@
+{
+	"files.associations": {
+		"*.bnf": "bnf",
+		"cpu-int-handlers.h": "c"
+	}
+}

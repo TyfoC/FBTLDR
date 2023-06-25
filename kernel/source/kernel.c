@@ -49,6 +49,14 @@ extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 	InitHardwareIntHandlers(KernelIDT, KernelCodeSegValue);
 	ENABLE_HARDWARE_INTERRUPTS();
 
+	//	PIT
+	InitPIT(PIT_SOFTWARE_FREQUENCY);
+
+	for (SIZE_T i = 0; i < 5; i++) {
+		Sleep(1000);
+		PutString("One second passed\r\n", BIOS_COLOR_WHITE);
+	}
+
 	PutString("Done\r\n", BIOS_COLOR_YELLOW);
 	STOP();
 }

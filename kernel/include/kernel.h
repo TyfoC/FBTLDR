@@ -2,11 +2,9 @@
 #ifndef KERNEL
 #define KERNEL
 
-#include "asm-utils.h"
-#include "cpu-desc-tables.h"
-#include "cpu-int-handlers.h"
-#include "pic.h"
 #include "terminal.h"
+#include "pic.h"
+#include "pit.h"
 
 #define KERNEL_BASE_ADDRESS							((SIZE_T)&__PTR_KERNEL_BASE_ADDRESS__)
 #define KERNEL_END_ADDRESS							((SIZE_T)&__PTR_KERNEL_END_ADDRESS__)
