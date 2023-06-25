@@ -1,7 +1,7 @@
 bits 32
 
-extern KernelDataSegValue
 extern SoftwareInterruptHandler
+extern HardwareInterruptHandler
 
 %macro SOFTWARE_INT_HANDLER_NO_ERROR	1
 extern SoftwareIntHandler%1
@@ -16,6 +16,14 @@ extern SoftwareIntHandler%1
 SoftwareIntHandler%1:
 	push %1
 	jmp CommonSoftwareIntHandlerStub
+%endmacro
+
+%macro HARDWARE_INT_HANDLER				1
+extern HardwareIntHandler%1
+HardwareIntHandler%1:
+	push 0
+	push %1+32
+	jmp CommonHardwareIntHandlerStub
 %endmacro
 
 SOFTWARE_INT_HANDLER_NO_ERROR	0
@@ -51,13 +59,30 @@ SOFTWARE_INT_HANDLER_ERROR		29
 SOFTWARE_INT_HANDLER_ERROR		30
 SOFTWARE_INT_HANDLER_NO_ERROR	31
 
+HARDWARE_INT_HANDLER			0
+HARDWARE_INT_HANDLER			1
+HARDWARE_INT_HANDLER			2
+HARDWARE_INT_HANDLER			3
+HARDWARE_INT_HANDLER			4
+HARDWARE_INT_HANDLER			5
+HARDWARE_INT_HANDLER			6
+HARDWARE_INT_HANDLER			7
+HARDWARE_INT_HANDLER			8
+HARDWARE_INT_HANDLER			9
+HARDWARE_INT_HANDLER			10
+HARDWARE_INT_HANDLER			11
+HARDWARE_INT_HANDLER			12
+HARDWARE_INT_HANDLER			13
+HARDWARE_INT_HANDLER			14
+HARDWARE_INT_HANDLER			15
+
 CommonSoftwareIntHandlerStub:
 	pusha
 	push ds
 	push es
 	push fs
 	push gs
-	mov eax, 0x10
+	mov ax, 0x10
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
@@ -65,6 +90,29 @@ CommonSoftwareIntHandlerStub:
 	mov eax, esp
 	push eax
 	call SoftwareInterruptHandler
+	pop eax
+	pop gs
+	pop fs
+	pop es
+	pop ds
+	popa
+	add esp, 8
+	iret
+
+CommonHardwareIntHandlerStub:
+	pusha
+	push ds
+	push es
+	push fs
+	push gs
+	mov ax, 0x10
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+	mov eax, esp
+	push eax
+	call HardwareInterruptHandler
 	pop eax
 	pop gs
 	pop fs

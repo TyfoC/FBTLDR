@@ -36,3 +36,17 @@ LoadIDTRegister:
 	mov eax, [esp + 4]
 	lidt [eax]
 	ret
+
+extern IOWait
+IOWait:
+	mov [.TmpBuff], eax
+
+	in al, 0x80
+	xchg ah, al
+	out 0x80, al
+	xchg ah, al
+	out 0x80, al
+
+	mov eax, [.TmpBuff]
+	ret
+.TmpBuff:	dd	0

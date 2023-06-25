@@ -14,5 +14,6 @@ UINT32 GetCR2Value(VOID);
 UINT32 GetCR4Value(VOID);
 VOID LoadGDTRegister(const void* gdtReg);
 VOID LoadIDTRegister(const void* idtReg);
+VOID IOWait(VOID);
 
 #endif

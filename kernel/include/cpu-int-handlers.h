@@ -4,7 +4,10 @@
 
 #include "cpu-desc-tables.h"
 #include "asm-utils.h"
+#include "pic.h"
 #include "terminal.h"
+
+#define HARDWARE_INT_HANDLERS_COUNT		0x10
 
 typedef struct ATTRIB(__packed__) INT_HANDLER_REGISTERS {
 	UINT32	GS;
@@ -31,8 +34,12 @@ typedef struct ATTRIB(__packed__) INT_HANDLER_REGISTERS {
 typedef VOID (*INT_HANDLER)(INT_HANDLER_REGISTERS* registers);
 
 VOID InstallSoftwareIntHandler(SIZE_T intIndex, INT_HANDLER intHandler);
+VOID InstallHardwareIntHandler(SIZE_T intIndex, INT_HANDLER intHandler);
 VOID UninstallSoftwareIntHandler(SIZE_T intIndex);
+VOID UninstallHardwareIntHandler(SIZE_T intIndex);
 VOID GetSoftwareIntHandler(SIZE_T intIndex, INT_HANDLER* intHandler);
+VOID GetHardwareIntHandler(SIZE_T intIndex, INT_HANDLER* intHandler);
 VOID InitSoftwareIntHandlers(IDT_ENTRY* idt, UINT16 codeSegValue);
+VOID InitHardwareIntHandlers(IDT_ENTRY* idt, UINT16 codeSegValue);
 
 #endif

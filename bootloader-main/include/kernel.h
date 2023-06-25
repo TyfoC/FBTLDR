@@ -3,6 +3,7 @@
 #define KERNEL
 
 #include "gdt.h"
+#include "pci.h"
 
 #define KERNEL_BASE_SEG_VALUE			0x1000
 #define KERNEL_BASE_OFF_VALUE			0x0000
@@ -26,6 +27,7 @@ typedef struct ATTRIB(__packed__) KernelInitializationData {
 	uint32_t	GdtEntriesCount;
 	uint32_t	GdtCodeSegIndex;
 	uint32_t	GdtDataSegIndex;
+	uint32_t	PciSupportBits;
 } KernelInitializationData;
 
 extern GdtRegister KernelGdtRegister;

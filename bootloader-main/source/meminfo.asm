@@ -10,6 +10,7 @@ GetMemoryMapElement:
 	mov es, di
 	mov edi, [esp + 10]			;	buffer offset
 	mov ebx, [esp + 14]			;	previous BIOS memory map offset
+	mov dword [es:di + 20], 1
 	int 0x15
 	jc .Error
 	cmp eax, 0x534d4150

@@ -1,3 +1,5 @@
+bits 32
+
 extern OutByte
 OutByte:
 	mov dx, [esp + 4]
