@@ -5,6 +5,9 @@ static const CHAR HorizontalTab[] = "    ", VerticalTab[] = "\n\n\n\n";
 static CHAR* TerminalBuffer = (CHAR*)0xb8000;
 static SIZE_T CursorOffset = 0;
 
+static BIOS_COLOR InputStringKeyHandlerColor;
+VOID InputStringKeyHandler(CHAR readChar);
+
 STRING_POSITION GetCursorPosition(VOID) {
 	STRING_POSITION position = {
 		CursorOffset / TERMINAL_WIDTH_SIZE,
@@ -52,7 +55,11 @@ VOID PutChar(CHAR character, BIOS_COLOR characterColor) {
 		TerminalBuffer[CursorOffset++] = character;
 		TerminalBuffer[CursorOffset++] = characterColor;
 
-		if (CursorOffset >= TERMINAL_SIZE) CursorOffset -= TERMINAL_WIDTH_SIZE;
+		if (CursorOffset >= TERMINAL_SIZE) {
+			CursorOffset -= TERMINAL_WIDTH_SIZE;
+			CopyMemory(TerminalBuffer, &TerminalBuffer[TERMINAL_WIDTH_SIZE], TERMINAL_SIZE - TERMINAL_WIDTH_SIZE);
+			FillMemory((VOID*)&TerminalBuffer[TERMINAL_SIZE - TERMINAL_WIDTH_SIZE], '\0', TERMINAL_WIDTH_SIZE);
+		}
 	}
 }
 
@@ -105,4 +112,52 @@ VOID PrintFormatted(const CHAR* format, BIOS_COLOR defaultColor, ...) {
 		}
 		else PutChar(format[i], currentColor);
 	}
+}
+
+CHAR InputChar(BIOS_COLOR color) {
+	BOOL entered = FALSE;
+	CHAR character, tmp;
+	do {
+		tmp = PS2KbdReadChar();
+		if (tmp == '\n') {
+			if (entered) {
+				PutString("\r\n", color);
+				break;
+			}
+		}
+		else if (tmp == '\b' && entered) {
+			entered = FALSE;
+			if (CursorOffset) {
+				CursorOffset -= 2;
+				PutChar(' ', color);
+				CursorOffset -= 2;
+			}
+		}
+		else {
+			if (entered && CursorOffset) CursorOffset -= 2;
+			character = tmp;
+			entered = TRUE;
+			PutChar(character, color);
+		}
+
+	} while (TRUE);
+
+	return character;
+}
+
+VOID InputString(BIOS_COLOR color, CHAR* result, SIZE_T maxLength) {
+	InputStringKeyHandlerColor = color;
+	PS2KbdReadString(result, maxLength, InputStringKeyHandler);
+}
+
+VOID InputStringKeyHandler(CHAR readChar) {
+	if (readChar == '\b') {
+		if (CursorOffset) {
+			CursorOffset -= 2;
+			PutChar(' ', InputStringKeyHandlerColor);
+			CursorOffset -= 2;
+		}
+	}
+	else if (readChar == '\n') PutString("\r\n", InputStringKeyHandlerColor);
+	else PutChar(readChar, InputStringKeyHandlerColor);
 }

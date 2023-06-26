@@ -64,14 +64,12 @@ extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 		if (!ps2KbdInstalled) PutString("Warning: failed to initialize PS/2 kbd driver!\r\n", BIOS_COLOR_LIGHT_RED);
 	}
 
-	KBD_SCAN_DATA scanData;
+	SIZE_T buffLen = 0x100;
+	CHAR* buff = AllocatePhysicalMemory(buffLen);
 	while (TRUE) {
-		scanData = PS2KbdReadKey();
-		if (!scanData.Released) {
-			PutString("You pressed: `", BIOS_COLOR_DARK_GRAY);
-			PutChar(scanData.Character, BIOS_COLOR_WHITE);
-			PutString("`\r\n", BIOS_COLOR_DARK_GRAY);
-		}
+		PutString("Enter string: ", BIOS_COLOR_DARK_GRAY);
+		InputString(BIOS_COLOR_YELLOW, buff, buffLen);
+		PrintFormatted("You entered: `%a%s%r`\r\n", BIOS_COLOR_DARK_GRAY, BIOS_COLOR_LIGHT_CYAN, buff);
 	}
 
 	ShutdownKernel(3);

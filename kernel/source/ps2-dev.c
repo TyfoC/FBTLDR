@@ -211,7 +211,8 @@ SIZE_T PS2DevGetMouseIndex(VOID) {
 
 VOID PS2FirstHandler(INT_HANDLER_REGISTERS*) {
 	UINT8 data = InByte(PS2_CTRL_PORT_DATA);
-	for (SIZE_T i = FirstDevBufferLength; i > 0; i--) FirstDevBuffer[i] = FirstDevBuffer[i - 1];
+	SIZE_T count = FirstDevBufferLength < PS2_DEV_BUFFER_LENGTH ? FirstDevBufferLength : PS2_DEV_BUFFER_LENGTH - 1;
+	for (SIZE_T i = count; i > 0; i--) FirstDevBuffer[i] = FirstDevBuffer[i - 1];
 	
 	FirstDevBuffer[0] = data;
 	if (FirstDevBufferLength < PS2_DEV_BUFFER_LENGTH) ++FirstDevBufferLength;
@@ -219,7 +220,8 @@ VOID PS2FirstHandler(INT_HANDLER_REGISTERS*) {
 
 VOID PS2SecondHandler(INT_HANDLER_REGISTERS*) {
 	UINT8 data = InByte(PS2_CTRL_PORT_DATA);
-	for (SIZE_T i = SecondDevBufferLength; i > 0; i--) SecondDevBuffer[i] = SecondDevBuffer[i - 1];
+	SIZE_T count = SecondDevBufferLength < PS2_DEV_BUFFER_LENGTH ? SecondDevBufferLength : PS2_DEV_BUFFER_LENGTH - 1;
+	for (SIZE_T i = count; i > 0; i--) SecondDevBuffer[i] = SecondDevBuffer[i - 1];
 	
 	SecondDevBuffer[0] = data;
 	if (SecondDevBufferLength < PS2_DEV_BUFFER_LENGTH) ++SecondDevBufferLength;

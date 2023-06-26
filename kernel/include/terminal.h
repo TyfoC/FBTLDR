@@ -6,6 +6,7 @@
 #include "int-utils.h"
 #include "bios-colors.h"
 #include "math-utils.h"
+#include "ps2-kbd.h"
 
 #define TERMINAL_WIDTH				0x50
 #define TERMINAL_HEIGHT				0x19
@@ -19,5 +20,7 @@ BOOL SetCursorOffset(SIZE_T offset);
 VOID PutChar(CHAR character, BIOS_COLOR characterColor);
 VOID PutString(const CHAR* str, BIOS_COLOR strColor);
 VOID PrintFormatted(const CHAR* format, BIOS_COLOR defaultColor, ...);
+CHAR InputChar(BIOS_COLOR color);
+VOID InputString(BIOS_COLOR color, CHAR* result, SIZE_T maxLength);
 
 #endif
