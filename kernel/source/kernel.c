@@ -42,6 +42,9 @@ extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 	InstallHardwareIntHandlers(KernelIDT, KernelCodeSegValue);
 	ENABLE_HARDWARE_INTERRUPTS();
 
+	//	FPU
+	// InstallFPU();
+
 	//	PIT
 	InstallPIT(PIT_SOFTWARE_FREQUENCY);
 
@@ -62,14 +65,38 @@ extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 
 		BOOL ps2KbdInstalled = InstallPS2Kbd();
 		if (!ps2KbdInstalled) PutString("Warning: failed to initialize PS/2 kbd driver!\r\n", BIOS_COLOR_LIGHT_RED);
+
+		BOOL ps2MouseInstalled = InstallPS2Mouse();
+		if (!ps2MouseInstalled && !ps2KbdInstalled) {
+			PutString("Error: failed to initialize PS/2 mouse!\r\n", BIOS_COLOR_LIGHT_RED);
+			ShutdownKernel(5);
+		}
 	}
 
-	SIZE_T buffLen = 0x100;
-	CHAR* buff = AllocatePhysicalMemory(buffLen);
+	CHAR offChar;
+	BIOS_COLOR offColor;
+	SIZE_T off = NPOS, msX = TERMINAL_WIDTH / 2, msY = TERMINAL_HEIGHT / 2;
+	SIZE_T prevX = msX, prevY = msY;
+	UINT8* termBuff = GetTerminalBuffer();
 	while (TRUE) {
-		PutString("Enter string: ", BIOS_COLOR_DARK_GRAY);
-		InputString(BIOS_COLOR_YELLOW, buff, buffLen);
-		PrintFormatted("You entered: `%a%s%r`\r\n", BIOS_COLOR_DARK_GRAY, BIOS_COLOR_LIGHT_CYAN, buff);
+		msX = PS2MouseGetX(PS2_MOUSE_WIDTH, 9);
+		msY = PS2MouseGetY(PS2_MOUSE_HEIGHT, 16);
+
+		if (msX != prevX || msY != prevY) {
+			termBuff[off] = offChar;
+			termBuff[off + 1] = offColor;
+
+			SetCursorPosition((STRING_POSITION){ msY, msX });
+			offChar = GetTerminalCharByOffset();
+			offColor = GetTerminalCharColorByOffset();
+			off = GetCursorOffset();
+
+			termBuff[off] = 'O';
+			termBuff[off + 1] = BIOS_COLOR_LIGHT_GREEN;
+		}
+
+		prevX = msX;
+		prevY = msY;
 	}
 
 	ShutdownKernel(3);

@@ -17,9 +17,13 @@ STRING_POSITION GetCursorPosition(VOID);
 BOOL SetCursorPosition(const STRING_POSITION position);
 SIZE_T GetCursorOffset(VOID);
 BOOL SetCursorOffset(SIZE_T offset);
+VOID FixCursorPosition(VOID);
+UINT8* GetTerminalBuffer(VOID);
 VOID PutChar(CHAR character, BIOS_COLOR characterColor);
 VOID PutString(const CHAR* str, BIOS_COLOR strColor);
 VOID PrintFormatted(const CHAR* format, BIOS_COLOR defaultColor, ...);
+CHAR GetTerminalCharByOffset(VOID);
+BIOS_COLOR GetTerminalCharColorByOffset(VOID);
 CHAR InputChar(BIOS_COLOR color);
 VOID InputString(BIOS_COLOR color, CHAR* result, SIZE_T maxLength);
 

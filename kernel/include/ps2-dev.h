@@ -36,6 +36,8 @@
 #define PS2_DEV_TYPE_NCD_SUN_LAYOUT_KBD				0xACA1
 #define PS2_DEV_TYPE_UNDEFINED						0xEEEE
 
+typedef VOID (*PS2_DEV_INT_HANDLER)(UINT8 value);
+
 BOOL PS2DevsInit(VOID);
 BOOL PS2DevsInitialized(VOID);
 UINT8 PS2DevSendByte(SIZE_T devIndex, UINT8 value, BOOL ctrlData);
@@ -44,6 +46,7 @@ UINT8 PS2DevBufferPopLastByte(SIZE_T devIndex);
 UINT8 PS2DevBufferPopFirstByte(SIZE_T devIndex);
 VOID PS2DevEmptyBuffer(SIZE_T devIndex);
 BOOL PS2DevReset(SIZE_T devIndex);
+VOID PS2DevSetIRQHandler(SIZE_T devIndex, PS2_DEV_INT_HANDLER intHandler);
 UINT16 PS2DevGetType(SIZE_T devIndex);
 UINT16 PS2DevGetKbdType(VOID);
 UINT16 PS2DevGetMouseType(VOID);

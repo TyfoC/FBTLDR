@@ -33,6 +33,18 @@ BOOL SetCursorOffset(SIZE_T offset) {
 	return TRUE;
 }
 
+VOID FixCursorPosition(VOID) {
+	if (CursorOffset >= TERMINAL_SIZE) {
+		CursorOffset -= TERMINAL_WIDTH_SIZE;
+		CopyMemory(TerminalBuffer, &TerminalBuffer[TERMINAL_WIDTH_SIZE], TERMINAL_SIZE - TERMINAL_WIDTH_SIZE);
+		FillMemory((VOID*)&TerminalBuffer[TERMINAL_SIZE - TERMINAL_WIDTH_SIZE], '\0', TERMINAL_WIDTH_SIZE);
+	}
+}
+
+UINT8* GetTerminalBuffer(VOID) {
+	return TerminalBuffer;
+}
+
 VOID PutChar(CHAR character, BIOS_COLOR characterColor) {
 	STRING_POSITION tmpStrPos = { 0, 0 };
 	if (character == '\t') PutString(HorizontalTab, characterColor);
@@ -52,14 +64,9 @@ VOID PutChar(CHAR character, BIOS_COLOR characterColor) {
 		if (CursorOffset >= 2) CursorOffset -= 2;
 	}
 	else {
+		FixCursorPosition();
 		TerminalBuffer[CursorOffset++] = character;
 		TerminalBuffer[CursorOffset++] = characterColor;
-
-		if (CursorOffset >= TERMINAL_SIZE) {
-			CursorOffset -= TERMINAL_WIDTH_SIZE;
-			CopyMemory(TerminalBuffer, &TerminalBuffer[TERMINAL_WIDTH_SIZE], TERMINAL_SIZE - TERMINAL_WIDTH_SIZE);
-			FillMemory((VOID*)&TerminalBuffer[TERMINAL_SIZE - TERMINAL_WIDTH_SIZE], '\0', TERMINAL_WIDTH_SIZE);
-		}
 	}
 }
 
@@ -112,6 +119,14 @@ VOID PrintFormatted(const CHAR* format, BIOS_COLOR defaultColor, ...) {
 		}
 		else PutChar(format[i], currentColor);
 	}
+}
+
+CHAR GetTerminalCharByOffset(VOID) {
+	return TerminalBuffer[CursorOffset];
+}
+
+BIOS_COLOR GetTerminalCharColorByOffset(VOID) {
+	return TerminalBuffer[CursorOffset + 1];
 }
 
 CHAR InputChar(BIOS_COLOR color) {

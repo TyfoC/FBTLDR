@@ -1,10 +1,12 @@
 #include <ps2-dev.h>
 
 static BOOL DevsInitialized = FALSE;
-static UINT8 FirstDevBuffer[PS2_DEV_BUFFER_LENGTH];
-static UINT8 SecondDevBuffer[PS2_DEV_BUFFER_LENGTH];
-static SIZE_T FirstDevBufferLength = 0;
-static SIZE_T SecondDevBufferLength = 0;
+UINT8 FirstPS2DevBuffer[PS2_DEV_BUFFER_LENGTH];
+UINT8 SecondPS2DevBuffer[PS2_DEV_BUFFER_LENGTH];
+SIZE_T FirstPS2DevBufferLength = 0;
+SIZE_T SecondPS2DevBufferLength = 0;
+static PS2_DEV_INT_HANDLER FirstPS2DevIRQHandler;
+static PS2_DEV_INT_HANDLER SecondPS2DevIRQHandler;
 static SIZE_T KbdDevIndex = NPOS;
 static SIZE_T MouseDevIndex = NPOS;
 static UINT16 KbdDevType = PS2_DEV_TYPE_UNDEFINED;
@@ -119,22 +121,22 @@ UINT8 PS2DevSendByte(SIZE_T devIndex, UINT8 value, BOOL ctrlData) {
 
 
 BOOL PS2DevBufferFull(SIZE_T devIndex) {
-	return devIndex == PS2_DEV_FIRST ? FirstDevBufferLength : SecondDevBufferLength;
+	return devIndex == PS2_DEV_FIRST ? FirstPS2DevBufferLength : SecondPS2DevBufferLength;
 }
 
 UINT8 PS2DevBufferPopLastByte(SIZE_T devIndex) {
 	UINT8 result;
 	if (devIndex == PS2_DEV_FIRST) {
-		while (!FirstDevBufferLength) {}
-		result = FirstDevBuffer[0];
-		--FirstDevBufferLength;
-		for (SIZE_T i = 0; i < FirstDevBufferLength; i++) FirstDevBuffer[i] = FirstDevBuffer[i + 1];
+		while (!FirstPS2DevBufferLength) {}
+		result = FirstPS2DevBuffer[0];
+		--FirstPS2DevBufferLength;
+		for (SIZE_T i = 0; i < FirstPS2DevBufferLength; i++) FirstPS2DevBuffer[i] = FirstPS2DevBuffer[i + 1];
 	}
 	else {
-		while (!SecondDevBufferLength) {}
-		result = SecondDevBuffer[0];
-		--SecondDevBufferLength;
-		for (SIZE_T i = 0; i < SecondDevBufferLength; i++) SecondDevBuffer[i] = SecondDevBuffer[i + 1];
+		while (!SecondPS2DevBufferLength) {}
+		result = SecondPS2DevBuffer[0];
+		--SecondPS2DevBufferLength;
+		for (SIZE_T i = 0; i < SecondPS2DevBufferLength; i++) SecondPS2DevBuffer[i] = SecondPS2DevBuffer[i + 1];
 	}
 
 	return result;
@@ -143,12 +145,12 @@ UINT8 PS2DevBufferPopLastByte(SIZE_T devIndex) {
 UINT8 PS2DevBufferPopFirstByte(SIZE_T devIndex) {
 	UINT8 result;
 	if (devIndex == PS2_DEV_FIRST) {
-		while (!FirstDevBufferLength) {}
-		result = FirstDevBuffer[--FirstDevBufferLength];
+		while (!FirstPS2DevBufferLength) {}
+		result = FirstPS2DevBuffer[--FirstPS2DevBufferLength];
 	}
 	else {
-		while (!SecondDevBufferLength) {}
-		result = SecondDevBuffer[--SecondDevBufferLength];
+		while (!SecondPS2DevBufferLength) {}
+		result = SecondPS2DevBuffer[--SecondPS2DevBufferLength];
 	}
 
 	return result;
@@ -168,6 +170,11 @@ BOOL PS2DevReset(SIZE_T devIndex) {
 	PS2DevEmptyBuffer(devIndex);														//	PS/2 mouse can send ID byte (0x00)
 	answer = PS2DevSendByte(devIndex, PS2_DEV_COMMAND_ENABLE_DATA_REPORTING, FALSE);	//	PS/2 mouse stops data reporting after reset command
 	return answer == PS2_DEV_ANSWER_ACK;
+}
+
+VOID PS2DevSetIRQHandler(SIZE_T devIndex, PS2_DEV_INT_HANDLER intHandler) {
+	if (devIndex == PS2_DEV_FIRST) FirstPS2DevIRQHandler = intHandler;
+	else SecondPS2DevIRQHandler = intHandler;
 }
 
 UINT16 PS2DevGetType(SIZE_T devIndex) {
@@ -211,18 +218,20 @@ SIZE_T PS2DevGetMouseIndex(VOID) {
 
 VOID PS2FirstHandler(INT_HANDLER_REGISTERS*) {
 	UINT8 data = InByte(PS2_CTRL_PORT_DATA);
-	SIZE_T count = FirstDevBufferLength < PS2_DEV_BUFFER_LENGTH ? FirstDevBufferLength : PS2_DEV_BUFFER_LENGTH - 1;
-	for (SIZE_T i = count; i > 0; i--) FirstDevBuffer[i] = FirstDevBuffer[i - 1];
+	SIZE_T count = FirstPS2DevBufferLength < PS2_DEV_BUFFER_LENGTH ? FirstPS2DevBufferLength : PS2_DEV_BUFFER_LENGTH - 1;
+	for (SIZE_T i = count; i > 0; i--) FirstPS2DevBuffer[i] = FirstPS2DevBuffer[i - 1];
 	
-	FirstDevBuffer[0] = data;
-	if (FirstDevBufferLength < PS2_DEV_BUFFER_LENGTH) ++FirstDevBufferLength;
+	FirstPS2DevBuffer[0] = data;
+	if (FirstPS2DevBufferLength < PS2_DEV_BUFFER_LENGTH) ++FirstPS2DevBufferLength;
+	if (FirstPS2DevIRQHandler) FirstPS2DevIRQHandler(data);
 }
 
 VOID PS2SecondHandler(INT_HANDLER_REGISTERS*) {
 	UINT8 data = InByte(PS2_CTRL_PORT_DATA);
-	SIZE_T count = SecondDevBufferLength < PS2_DEV_BUFFER_LENGTH ? SecondDevBufferLength : PS2_DEV_BUFFER_LENGTH - 1;
-	for (SIZE_T i = count; i > 0; i--) SecondDevBuffer[i] = SecondDevBuffer[i - 1];
+	SIZE_T count = SecondPS2DevBufferLength < PS2_DEV_BUFFER_LENGTH ? SecondPS2DevBufferLength : PS2_DEV_BUFFER_LENGTH - 1;
+	for (SIZE_T i = count; i > 0; i--) SecondPS2DevBuffer[i] = SecondPS2DevBuffer[i - 1];
 	
-	SecondDevBuffer[0] = data;
-	if (SecondDevBufferLength < PS2_DEV_BUFFER_LENGTH) ++SecondDevBufferLength;
+	SecondPS2DevBuffer[0] = data;
+	if (SecondPS2DevBufferLength < PS2_DEV_BUFFER_LENGTH) ++SecondPS2DevBufferLength;
+	if (SecondPS2DevIRQHandler) SecondPS2DevIRQHandler(data);
 }
