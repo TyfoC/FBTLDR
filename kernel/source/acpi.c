@@ -14,7 +14,7 @@ static UINT16 SleepTypeA;
 static UINT16 SleepTypeB;
 static UINT16 SleepEnable;
 
-BOOL InitACPI(VOID) {
+BOOL InstallACPI(VOID) {
 	RSDP2* rsdp = (RSDP2*)(*((UINT16*)0x0000040E) * 0x10 & 0x000FFFFF);
 	SIZE_T searchBound = (SIZE_T)rsdp + 0x400;
 
@@ -161,11 +161,11 @@ BOOL ACPIInitialized(VOID) {
 	return SCIEnabled;
 }
 
-UINT8 GetACPIMajorVersion(VOID) {
+UINT8 ACPIGetMajorVersion(VOID) {
 	return MajorVersion;
 }
 
-UINT8 GetACPIMinorVersion(VOID) {
+UINT8 ACPIGetMinorVersion(VOID) {
 	return MinorVersion;
 }
 

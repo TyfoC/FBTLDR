@@ -18,7 +18,7 @@
 #define PIT_SOFTWARE_FREQUENCY	1000
 
 //	PIT_SOFTWARE_FREQUENCY - 1 ms/tick
-VOID InitPIT(SIZE_T frequency);
+VOID InstallPIT(SIZE_T frequency);
 VOID SetPITFrequency(SIZE_T frequency);
 VOID Sleep(UINT64 ticksCount);
 SIZE_T GetTicksCount(VOID);

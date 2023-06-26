@@ -125,12 +125,12 @@ typedef struct ATTRIB_PACKED {
 	GENERIC_ADDRESS_STRUCTURE	ExtendedGPE1Block;
 } FADT;
 
-BOOL InitACPI(VOID);
+BOOL InstallACPI(VOID);
 BOOL CheckRSDP(VOID* rsdp);
 BOOL CheckSDT(VOID* sdt, const CHAR* signature);
 BOOL ACPIInitialized(VOID);
-UINT8 GetACPIMajorVersion(VOID);
-UINT8 GetACPIMinorVersion(VOID);
+UINT8 ACPIGetMajorVersion(VOID);
+UINT8 ACPIGetMinorVersion(VOID);
 UINT16 GetBootArchitectureFlags(VOID);
 BOOL ACPIPowerOff(VOID);
 

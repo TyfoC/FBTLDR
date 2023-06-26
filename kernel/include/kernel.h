@@ -6,6 +6,9 @@
 #include "pic.h"
 #include "pit.h"
 #include "acpi.h"
+#include "ps2-ctrl.h"
+#include "ps2-dev.h"
+#include "ps2-kbd.h"
 
 #define KERNEL_BASE_ADDRESS							((SIZE_T)&__PTR_KERNEL_BASE_ADDRESS__)
 #define KERNEL_END_ADDRESS							((SIZE_T)&__PTR_KERNEL_END_ADDRESS__)

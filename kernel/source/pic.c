@@ -1,6 +1,6 @@
 #include <pic.h>
 
-VOID PICSendCommandToPIC(UINT8 vectorIndex, UINT8 command) {
+VOID PICSendCommand(UINT8 vectorIndex, UINT8 command) {
 	if (vectorIndex >= 8) OutByte(PIC_SLAVE_PORT_COMMAND, command);
 	OutByte(PIC_MASTER_PORT_COMMAND, command);
 }
@@ -32,6 +32,8 @@ VOID RemapPIC(UINT8 masterVectorOffset, UINT8 slaveVectorOffset) {
 }
 
 VOID MaskPICIRQ(UINT8 irqIndex) {
+	if (irqIndex == 2) return;
+
 	UINT16 portIndex;
     UINT8 value;
  
@@ -60,7 +62,7 @@ VOID UnmaskPICIRQ(UINT8 irqIndex) {
 }
 
 VOID MaskPIC(VOID) {
-	OutByte(PIC_MASTER_PORT_DATA, 0xFF);
+	OutByte(PIC_MASTER_PORT_DATA, 0xFF & ~0x04);
 	OutByte(PIC_SLAVE_PORT_DATA, 0xFF);
 }
 

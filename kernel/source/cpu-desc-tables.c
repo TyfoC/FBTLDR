@@ -1,6 +1,6 @@
 #include <cpu-desc-tables.h>
 
-VOID InitGDTRegister(const GDT_ENTRY* gdt, SIZE_T entriesCount, GDT_REGISTER* gdtReg) {
+VOID InitGDTR(const GDT_ENTRY* gdt, SIZE_T entriesCount, GDT_REGISTER* gdtReg) {
 	gdtReg->Size = sizeof(GDT_ENTRY) * entriesCount - 1;
 	gdtReg->Offset = (UINT32)gdt;
 }
@@ -14,7 +14,7 @@ VOID InitGDTEntry(UINT32 base, UINT32 limit, UINT8 access, UINT8 flags, GDT_ENTR
 	gdtEntry->BaseHigh = (base >> 24) & 0xFF;
 }
 
-VOID InitIDTRegister(const IDT_ENTRY* idt, SIZE_T entriesCount, IDT_REGISTER* idtReg) {
+VOID InitIDTR(const IDT_ENTRY* idt, SIZE_T entriesCount, IDT_REGISTER* idtReg) {
 	idtReg->Size = sizeof(IDT_ENTRY) * entriesCount - 1;
 	idtReg->Offset = (UINT32)idt;
 }

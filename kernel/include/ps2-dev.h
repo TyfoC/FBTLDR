@@ -1,0 +1,53 @@
+#pragma once
+#ifndef PS2_DEV
+#define PS2_DEV
+
+#include "ps2-ctrl.h"
+
+#define PS2_DEV_FIRST_IRQ							0x01
+#define PS2_DEV_SECOND_IRQ							0x0C
+#define PS2_DEV_FIRST								0x00
+#define PS2_DEV_SECOND								0x01
+#define PS2_DEV_BUFFER_LENGTH						0x80
+
+#define PS2_DEV_NUMBER_OF_ATTEMPTS					0x03
+
+#define PS2_DEV_RESPONSE_TIMEOUT					10		//	10 ms
+
+#define PS2_DEV_COMMAND_IDENTIFY					0xF2
+#define PS2_DEV_COMMAND_ENABLE_DATA_REPORTING		0xF4
+#define PS2_DEV_COMMAND_RESET						0xFF	//	PS2_DEV_ANSWER_RESET_DONE
+
+#define PS2_DEV_ANSWER_ACK							0xFA
+#define PS2_DEV_ANSWER_RESEND						0xFE
+#define PS2_DEV_ANSWER_RESET_DONE					0xAA
+
+#define PS2_DEV_TYPE_ANCIENT_AT_KBD					0xCCCC
+#define PS2_DEV_TYPE_STANDARD_MOSE					0x0000
+#define PS2_DEV_TYPE_MOUSE_WITH_WHEEL				0x0003
+#define PS2_DEV_TYPE_MOUSE_WITH_5_BUTTONS			0x0004
+#define PS2_DEV_TYPE_MF2_KBD						0xAB83
+#define PS2_DEV_TYPE_SHORT_KBD						0xAB84
+#define PS2_DEV_TYPE_122_KEY_HOST_CONN_KBD			0xAB85
+#define PS2_DEV_TYPE_122_KEY_KBD					0xAB86
+#define PS2_DEV_TYPE_JAPANESE_G_KBD					0xAB90
+#define PS2_DEV_TYPE_JAPANESE_P_KBD					0xAB91
+#define PS2_DEV_TYPE_JAPANESE_A_KBD					0xAB92
+#define PS2_DEV_TYPE_NCD_SUN_LAYOUT_KBD				0xACA1
+#define PS2_DEV_TYPE_UNDEFINED						0xEEEE
+
+BOOL PS2DevsInit(VOID);
+BOOL PS2DevsInitialized(VOID);
+UINT8 PS2DevSendByte(SIZE_T devIndex, UINT8 value, BOOL ctrlData);
+BOOL PS2DevBufferFull(SIZE_T devIndex);
+UINT8 PS2DevBufferPopLastByte(SIZE_T devIndex);
+UINT8 PS2DevBufferPopFirstByte(SIZE_T devIndex);
+VOID PS2DevEmptyBuffer(SIZE_T devIndex);
+BOOL PS2DevReset(SIZE_T devIndex);
+UINT16 PS2DevGetType(SIZE_T devIndex);
+UINT16 PS2DevGetKbdType(VOID);
+UINT16 PS2DevGetMouseType(VOID);
+SIZE_T PS2DevGetKbdIndex(VOID);
+SIZE_T PS2DevGetMouseIndex(VOID);
+
+#endif

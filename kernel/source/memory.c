@@ -7,7 +7,7 @@ static MEMORY_ALLOCATION_DATA* Allocations = 0;
 static SIZE_T NumberOfAllocations = 0;
 static MEMORY_ALLOCATION_DATA AllocData = { 0, 0, NPOS, NPOS };
 
-VOID InitPMM(MEMORY_REGION_DESCRIPTOR* regs, SIZE_T count) {
+VOID InstallPMM(MEMORY_REGION_DESCRIPTOR* regs, SIZE_T count) {
 	MEMORY_REGION_DESCRIPTOR memMapReg = {
 		(SIZE_T)regs, sizeof(MEMORY_REGION_DESCRIPTOR) * (count + 2), MEMORY_REGION_TYPE_RESERVED, 0
 	};

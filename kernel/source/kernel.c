@@ -24,44 +24,57 @@ extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 		sizeof(extraMemRegs) / sizeof(extraMemRegs[0])
 	);
 
-	InitPMM(memMap, memMapLen);
+	InstallPMM(memMap, memMapLen);
 	memMapLen = GetMemoryMapLength();
 
 	//	GDT, KernelCodeSegValue, KernelDataSegValue
-	InitGDTRegister(KernelGDT, KERNEL_GDT_ENTRIES_COUNT, &KernelGDTRegister);
+	InitGDTR(KernelGDT, KERNEL_GDT_ENTRIES_COUNT, &KernelGDTRegister);
 	LoadGDTRegister(&KernelGDTRegister);
 	KernelCodeSegValue = GetCodeSegValue();
 	KernelDataSegValue = GetDataSegValue();
 
 	//	IDT, ISRs, IRQs
-	InitIDTRegister(KernelIDT, KERNEL_IDT_ENTRIES_COUNT, &KernelIDTRegister);
+	InitIDTR(KernelIDT, KERNEL_IDT_ENTRIES_COUNT, &KernelIDTRegister);
 	LoadIDTRegister(&KernelIDTRegister);
-	InitSoftwareIntHandlers(KernelIDT, KernelCodeSegValue);
+	InstallSoftwareIntHandlers(KernelIDT, KernelCodeSegValue);
 	RemapPIC(0x20, 0x28);
 	MaskPIC();
-	InitHardwareIntHandlers(KernelIDT, KernelCodeSegValue);
+	InstallHardwareIntHandlers(KernelIDT, KernelCodeSegValue);
 	ENABLE_HARDWARE_INTERRUPTS();
 
 	//	PIT
-	InitPIT(PIT_SOFTWARE_FREQUENCY);
+	InstallPIT(PIT_SOFTWARE_FREQUENCY);
 
 	//	ACPI
-	UINT8 acpiVerMajor, acpiVerMinor;
-	UINT16 bootArchFlags;
-	if (!InitACPI()) PutString("Warning: failed to initialize ACPI driver, further work may lead to failures!\r\n", BIOS_COLOR_YELLOW);
+	if (!InstallACPI()) PutString("Warning: failed to initialize ACPI driver, further work may lead to failures!\r\n", BIOS_COLOR_YELLOW);
+
+	if (!InstallPS2Ctrl()) {
+		PutString("Error: failed to initialize PS/2 Controller!\r\n", BIOS_COLOR_LIGHT_RED);
+		ShutdownKernel(5);
+	}
 	else {
-		acpiVerMajor = GetACPIMajorVersion();
-		acpiVerMinor = GetACPIMinorVersion();
-		bootArchFlags = GetBootArchitectureFlags();
-		PrintFormatted("ACPI version: %u.%u\r\n", BIOS_COLOR_WHITE, acpiVerMajor, acpiVerMinor & 0x03);
-		
-		if (acpiVerMajor >= 2 && !(bootArchFlags & BOOT_ARCH_FLAG_8042)) {
-			PutString("Error: PS/2 keyboard not found! User input not possible!\r\n", BIOS_COLOR_LIGHT_RED);
+		PrintFormatted("First PS/2 Controller Port Available: %u\r\n", BIOS_COLOR_YELLOW, PS2CtrlFirstPortAvailable());
+		PrintFormatted("Second PS/2 Controller Port Available: %u\r\n", BIOS_COLOR_YELLOW, PS2CtrlSecondPortAvailable());
+		if (!PS2DevsInit()) {
+			PutString("Error: failed to initialize PS/2 devices!\r\n", BIOS_COLOR_LIGHT_RED);
 			ShutdownKernel(5);
+		}
+
+		BOOL ps2KbdInstalled = InstallPS2Kbd();
+		if (!ps2KbdInstalled) PutString("Warning: failed to initialize PS/2 kbd driver!\r\n", BIOS_COLOR_LIGHT_RED);
+	}
+
+	KBD_SCAN_DATA scanData;
+	while (TRUE) {
+		scanData = PS2KbdReadKey();
+		if (!scanData.Released) {
+			PutString("You pressed: `", BIOS_COLOR_DARK_GRAY);
+			PutChar(scanData.Character, BIOS_COLOR_WHITE);
+			PutString("`\r\n", BIOS_COLOR_DARK_GRAY);
 		}
 	}
 
-	ShutdownKernel(5);
+	ShutdownKernel(3);
 	STOP();
 }
 

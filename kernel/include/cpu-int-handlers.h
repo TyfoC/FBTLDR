@@ -39,7 +39,7 @@ VOID UninstallSoftwareIntHandler(SIZE_T intIndex);
 VOID UninstallHardwareIntHandler(SIZE_T intIndex);
 VOID GetSoftwareIntHandler(SIZE_T intIndex, INT_HANDLER* intHandler);
 VOID GetHardwareIntHandler(SIZE_T intIndex, INT_HANDLER* intHandler);
-VOID InitSoftwareIntHandlers(IDT_ENTRY* idt, UINT16 codeSegValue);
-VOID InitHardwareIntHandlers(IDT_ENTRY* idt, UINT16 codeSegValue);
+VOID InstallSoftwareIntHandlers(IDT_ENTRY* idt, UINT16 codeSegValue);
+VOID InstallHardwareIntHandlers(IDT_ENTRY* idt, UINT16 codeSegValue);
 
 #endif

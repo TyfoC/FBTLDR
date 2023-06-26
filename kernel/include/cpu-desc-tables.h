@@ -55,9 +55,9 @@ typedef struct ATTRIB_PACKED IDT_ENTRY {
 	UINT16				BaseHigh;
 } IDT_ENTRY;
 
-VOID InitGDTRegister(const GDT_ENTRY* gdt, SIZE_T entriesCount, GDT_REGISTER* gdtReg);
+VOID InitGDTR(const GDT_ENTRY* gdt, SIZE_T entriesCount, GDT_REGISTER* gdtReg);
 VOID InitGDTEntry(UINT32 base, UINT32 limit, UINT8 access, UINT8 flags, GDT_ENTRY* gdtEntry);
-VOID InitIDTRegister(const IDT_ENTRY* idt, SIZE_T entriesCount, IDT_REGISTER* idtReg);
+VOID InitIDTR(const IDT_ENTRY* idt, SIZE_T entriesCount, IDT_REGISTER* idtReg);
 VOID InitIDTEntry(UINT32 base, SEGMENT_SELECTOR codeSegSelector, UINT8 gateType, UINT8 flags, IDT_ENTRY* idtEntry);
 
 #endif

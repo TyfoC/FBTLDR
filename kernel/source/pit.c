@@ -4,7 +4,7 @@ static UINT64 TicksCount = 0;
 
 extern VOID PITHandler(INT_HANDLER_REGISTERS*);
 
-VOID InitPIT(SIZE_T frequency) {
+VOID InstallPIT(SIZE_T frequency) {
 	SetPITFrequency(frequency);
 	InstallHardwareIntHandler(PIT_IRQ_INDEX, PITHandler);
 	UnmaskPICIRQ(PIT_IRQ_INDEX);

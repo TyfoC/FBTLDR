@@ -79,7 +79,7 @@ VOID GetHardwareIntHandler(SIZE_T intIndex, INT_HANDLER* intHandler) {
 	*intHandler = intIndex >= HARDWARE_INT_HANDLERS_COUNT ? 0 : HardwareIntHandlers[intIndex];
 }
 
-VOID InitSoftwareIntHandlers(IDT_ENTRY* idt, UINT16 codeSegValue) {
+VOID InstallSoftwareIntHandlers(IDT_ENTRY* idt, UINT16 codeSegValue) {
 	SEGMENT_SELECTOR codeSegSelector;
 	InitSegmentSelector(codeSegValue, &codeSegSelector);
 
@@ -117,7 +117,7 @@ VOID InitSoftwareIntHandlers(IDT_ENTRY* idt, UINT16 codeSegValue) {
 	InitIDTEntry((UINT32)SoftwareIntHandler31, codeSegSelector, IDT_GATE_TYPE_INT32, IDT_FLAG_PRESENT, &idt[31]);
 }
 
-VOID InitHardwareIntHandlers(IDT_ENTRY* idt, UINT16 codeSegValue) {
+VOID InstallHardwareIntHandlers(IDT_ENTRY* idt, UINT16 codeSegValue) {
 	SEGMENT_SELECTOR codeSegSelector;
 	InitSegmentSelector(codeSegValue, &codeSegSelector);
 
@@ -200,5 +200,5 @@ extern VOID HardwareInterruptHandler(INT_HANDLER_REGISTERS* registers) {
 		);
 	}
 
-	PICSendCommandToPIC(intIndex, PIC_COMMAND_EOI);
+	PICSendCommand(intIndex, PIC_COMMAND_EOI);
 }
