@@ -77,7 +77,7 @@ extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 	BIOS_COLOR offColor;
 	SIZE_T off = NPOS, msX = TERMINAL_WIDTH / 2, msY = TERMINAL_HEIGHT / 2;
 	SIZE_T prevX = msX, prevY = msY;
-	UINT8* termBuff = GetTerminalBuffer();
+	CHAR* termBuff = GetTerminalBuffer();
 	while (TRUE) {
 		msX = PS2MouseGetX(PS2_MOUSE_WIDTH, 9);
 		msY = PS2MouseGetY(PS2_MOUSE_HEIGHT, 16);

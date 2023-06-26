@@ -41,7 +41,7 @@ VOID FixCursorPosition(VOID) {
 	}
 }
 
-UINT8* GetTerminalBuffer(VOID) {
+CHAR* GetTerminalBuffer(VOID) {
 	return TerminalBuffer;
 }
 
