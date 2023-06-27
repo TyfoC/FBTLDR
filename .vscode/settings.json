@@ -2,6 +2,7 @@
 	"files.associations": {
 		"*.bnf": "bnf",
 		"cpu-int-handlers.h": "c",
-		"ps2-dev.h": "c"
+		"ps2-dev.h": "c",
+		"pci.h": "c"
 	}
 }

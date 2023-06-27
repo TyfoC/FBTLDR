@@ -186,6 +186,18 @@ VOID* ReallocatePhysicalMemory(VOID* memory, SIZE_T count) {
 	return alcMem;
 }
 
+VOID* ConcatMemory(const VOID* first, const VOID* second, SIZE_T elemSize, SIZE_T firstLen, SIZE_T secondLen) {
+	SIZE_T firstSize = elemSize * firstLen;
+	SIZE_T secondSize = elemSize * secondLen;
+	SIZE_T resSize = firstSize + secondSize;;
+	VOID* res = AllocatePhysicalMemory(resSize);
+	if (!res) return 0;
+
+	CopyMemory(res, first, firstSize);
+	CopyMemory((VOID*)((SIZE_T)res + firstSize), second, secondSize);
+	return res;
+}
+
 SIZE_T FreePhysicalMemory(VOID* memory) {
 	MEMORY_ALLOCATION_DATA tmpAlcData;
 	SIZE_T unalignedSize, curSize, nextSize;

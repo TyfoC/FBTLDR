@@ -48,6 +48,9 @@ extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 	//	PIT
 	InstallPIT(PIT_SOFTWARE_FREQUENCY);
 
+	//	PCI
+	InstallPCI();
+
 	//	ACPI
 	if (!InstallACPI()) PutString("Warning: failed to initialize ACPI driver, further work may lead to failures!\r\n", BIOS_COLOR_YELLOW);
 
@@ -56,8 +59,6 @@ extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 		ShutdownKernel(5);
 	}
 	else {
-		PrintFormatted("First PS/2 Controller Port Available: %u\r\n", BIOS_COLOR_YELLOW, PS2CtrlFirstPortAvailable());
-		PrintFormatted("Second PS/2 Controller Port Available: %u\r\n", BIOS_COLOR_YELLOW, PS2CtrlSecondPortAvailable());
 		if (!PS2DevsInit()) {
 			PutString("Error: failed to initialize PS/2 devices!\r\n", BIOS_COLOR_LIGHT_RED);
 			ShutdownKernel(5);
@@ -73,33 +74,18 @@ extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 		}
 	}
 
-	CHAR offChar;
-	BIOS_COLOR offColor;
-	SIZE_T off = NPOS, msX = TERMINAL_WIDTH / 2, msY = TERMINAL_HEIGHT / 2;
-	SIZE_T prevX = msX, prevY = msY;
-	CHAR* termBuff = GetTerminalBuffer();
-	while (TRUE) {
-		msX = PS2MouseGetX(PS2_MOUSE_WIDTH, 9);
-		msY = PS2MouseGetY(PS2_MOUSE_HEIGHT, 16);
-
-		if (msX != prevX || msY != prevY) {
-			termBuff[off] = offChar;
-			termBuff[off + 1] = offColor;
-
-			SetCursorPosition((STRING_POSITION){ msY, msX });
-			offChar = GetTerminalCharByOffset();
-			offColor = GetTerminalCharColorByOffset();
-			off = GetCursorOffset();
-
-			termBuff[off] = 'O';
-			termBuff[off + 1] = BIOS_COLOR_LIGHT_GREEN;
-		}
-
-		prevX = msX;
-		prevY = msY;
+	PCI_DEVICE pciDev;
+	SIZE_T pciDevsCount = PCIGetDevicesCount();
+	PutString("PCI Devises:\r\n", BIOS_COLOR_DARK_GRAY);
+	for (SIZE_T i = 0; i < pciDevsCount; i++) {
+		PCIGetDevice(i, &pciDev);
+		PrintFormatted(
+			"%u) %u->%u->%u: VenID: 0x%xu, DevID: 0x%xu, Class: 0x%xu, SubClass: 0x%xu\r\n", BIOS_COLOR_DARK_GRAY, i + 1,
+			pciDev.Bus, pciDev.Slot, pciDev.Function, pciDev.VendorID, pciDev.DeviceID, pciDev.Class, pciDev.SubClass
+		);
 	}
 
-	ShutdownKernel(3);
+	ShutdownKernel(15);
 	STOP();
 }
 

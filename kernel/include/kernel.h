@@ -6,6 +6,7 @@
 #include "pic.h"
 #include "fpu.h"
 #include "pit.h"
+#include "pci.h"
 #include "acpi.h"
 #include "ps2-ctrl.h"
 #include "ps2-kbd.h"

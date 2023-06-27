@@ -55,6 +55,7 @@ VOID GetMemoryRegion(SIZE_T index, MEMORY_REGION_DESCRIPTOR* mrd);
 
 VOID* AllocatePhysicalMemory(SIZE_T count);
 VOID* ReallocatePhysicalMemory(VOID* memory, SIZE_T count);
+VOID* ConcatMemory(const VOID* first, const VOID* second, SIZE_T elemSize, SIZE_T firstLen, SIZE_T secondLen);
 SIZE_T FreePhysicalMemory(VOID* memory);
 MEMORY_ALLOCATION_DATA AllocatePhysicalFrames(SIZE_T bytesCount);
 MEMORY_ALLOCATION_DATA ReallocatePhysicalFrames(MEMORY_ALLOCATION_DATA* memAllocData, SIZE_T bytesCount);
