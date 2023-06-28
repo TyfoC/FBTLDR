@@ -86,8 +86,8 @@ extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 
 			for (SIZE_T j = 0; j < ctrl.NumberOfDevices; j++) {
 				PrintFormatted(
-					"CTRL#%u->DEV#%u: T: %u, I: %u\r\n", BIOS_COLOR_WHITE, i, j,
-					ctrl.Devices[j].Type, ctrl.Devices[j].Index
+					"CTRL#%u->DEV#%u: T: %u, I: %u, N: `%s`\r\n", BIOS_COLOR_WHITE, i, j,
+					ctrl.Devices[j].Type, ctrl.Devices[j].Index, ctrl.Devices[j].Model
 				);
 
 				if (IDEReadSectors(i, j, sectorData, 0, 1)) PutString("FAILED TO READ!\r\n", BIOS_COLOR_LIGHT_RED);
