@@ -133,203 +133,289 @@ SIZE_T IDEGetDevsCount(SIZE_T ctrlIndex) {
 	return ctrlIndex >= NumberOfCtrls ? 0 : Ctrls[ctrlIndex].NumberOfDevices;
 }
 
-UINT8 IDEReadSector(SIZE_T ctrlIndex, SIZE_T devIndex, VOID* destination, UINT32 lba, UINT8 count) {
+UINT8 IDEReadSectors(SIZE_T ctrlIndex, SIZE_T devIndex, VOID* destination, UINT32 lba, SIZE_T count) {
 	if (ctrlIndex >= NumberOfCtrls || devIndex >= Ctrls[ctrlIndex].NumberOfDevices) return IDE_TRANSFER_STATUS_NO_DEVICE;
-
+	
+	UINT8 status;
+	UINT8* buff = (UINT8*)destination;
 	IDE_DEVICE* dev = &Ctrls[ctrlIndex].Devices[devIndex];
-	IDE_CHANNEL* chnl = &Ctrls[ctrlIndex].Channels[dev->ChannelType];
-	UINT8 errVal;
-	SIZE_T i;
-
 	if (dev->Type == IDE_DEV_ATA) {
-		UINT8 transferMode, cmd;
-		UINT8 lbaIO[6], headIndex, sectorNumber, errVal;
-		UINT16 cylIndex;
-		SIZE_T j;
+		SIZE_T longParts = count / IDE_ATA_MAX_SECTORS_PER_OPERATION;
+		SIZE_T remainder = count % IDE_ATA_MAX_SECTORS_PER_OPERATION;
 
-		IDEWrite(chnl, ATA_OFF_CTRL, ATA_CTRL_IRQ_DISABLED);
+		for (SIZE_T i = 0; i < longParts; i++) {
+			status = IDEATAReadSector(ctrlIndex, devIndex, buff, lba, IDE_ATA_MAX_SECTORS_PER_OPERATION);
+			if (status != IDE_TRANSFER_STATUS_SUCCESS) return status;
 
-		if ((lba & 0xFF000000)) {
-			if (!(dev->Capabilities & 0x200)) return IDE_TRANSFER_STATUS_NO_LBA48;	//	lba 28/48 N/S
-			transferMode = TRANSFER_MODE_LBA48;
-			lbaIO[0] = lba & 0xFF;
-			lbaIO[1] = (lba & 0xFF00) >> 8;
-			lbaIO[2] = (lba & 0xFF0000) >> 16;
-			lbaIO[3] = (lba & 0xFF000000) >> 24;
-			lbaIO[4] = lbaIO[5] = headIndex = 0;
-		}
-		else if (dev->Capabilities & 0x200) {
-			transferMode = TRANSFER_MODE_LBA28;
-			lbaIO[0] = lba & 0xFF;
-			lbaIO[1] = (lba & 0xFF00) >> 8;
-			lbaIO[2] = (lba & 0xFF0000) >> 16;
-			lbaIO[3] = lbaIO[4] = lbaIO[5] = 0;
-			headIndex = (lba & 0xF000000) >> 24;
-		}
-		else {
-			transferMode = TRANSFER_MODE_CHS;
-			sectorNumber = (lba % 63) + 1;
-			cylIndex = (lba + 1 - sectorNumber) / (16 * 63);
-			lbaIO[0] = sectorNumber;
-			lbaIO[1] = cylIndex & 0xFF;
-			lbaIO[2] = (cylIndex >> 8) & 0xFF;
-			lbaIO[3] = lbaIO[4] = lbaIO[5] = 0;
-			headIndex = (UINT8)((lba + 1 - sectorNumber) % (16 * 63) / 63);
+			buff = &buff[IDE_ATA_MAX_TRANSFER_SIZE_PER_OPERATION];
+			lba += IDE_ATA_MAX_SECTORS_PER_OPERATION;
 		}
 
-		while (IDERead(chnl, ATA_OFF_STATUS) & ATA_STATUS_BUSY) {}
-
-		UINT8 hardDrvSelVal = transferMode == TRANSFER_MODE_CHS ? 0xA0 : 0xE0;
-		IDEWrite(chnl, ATA_OFF_HD_DEV_SEL, hardDrvSelVal | (dev->Type << 4) | headIndex);
-
-		if (transferMode == TRANSFER_MODE_LBA48) {
-			IDEWrite(chnl, ATA_OFF_SECTORS_CNT1, 0);
-			IDEWrite(chnl, ATA_OFF_LBA3, lbaIO[3]);
-			IDEWrite(chnl, ATA_OFF_LBA4, lbaIO[4]);
-			IDEWrite(chnl, ATA_OFF_LBA5, lbaIO[5]);
-		}
-		
-		IDEWrite(chnl, ATA_OFF_SECTORS_CNT0, count);
-		IDEWrite(chnl, ATA_OFF_LBA0, lbaIO[0]);
-		IDEWrite(chnl, ATA_OFF_LBA1, lbaIO[1]);
-		IDEWrite(chnl, ATA_OFF_LBA2, lbaIO[2]);
-
-		if (transferMode == TRANSFER_MODE_CHS || transferMode == TRANSFER_MODE_LBA28) cmd = ATA_COMMAND_READ_PIO;
-		else if (transferMode == TRANSFER_MODE_LBA48) cmd = ATA_COMMAND_READ_PIO_EXT;
-		else return IDE_TRANSFER_STATUS_UNKNOWN_MODE;	//	unknown mode
-
-		IDEWrite(chnl, ATA_OFF_CMD, cmd);
-		UINT16* buff = (UINT16*)destination;
-		for (j = 0; j < count; j++) {
-			for (i = 0; i < 256; i++) {
-				errVal = IDEPoll(chnl, TRUE);
-				if (errVal) return errVal;
-
-				*buff = InWord(chnl->IOBase);
-				++buff;
-			}
+		if (remainder) {
+			status = IDEATAReadSector(ctrlIndex, devIndex, buff, lba, remainder);
+			if (status != IDE_TRANSFER_STATUS_SUCCESS) return status;
 		}
 	}
 	else {
-		ATAPI_PACKET packet = { ATAPI_COMMAND_READ, 0, lba, count, 0, 0 };
-		SIZE_T wordsCount = 1024;
-
-		IDEWaitIRQ(ctrlIndex, devIndex);
-		IDEWrite(chnl, ATA_OFF_CTRL, chnl->IntDisabled = FALSE);
-
-		IDEWrite(chnl, ATA_OFF_HD_DEV_SEL, dev->Type << 4);
-		for (SIZE_T i = 0; i < 4; i++) IDERead(chnl, ATA_OFF_ALT_STATUS);
-
-		IDEWrite(chnl, ATA_OFF_FEATURES, 0);								//	PIO
-
-		IDEWrite(chnl, ATA_OFF_LBA1, (wordsCount * 2) & 0xFF);				// Lower Byte of Sector Size
-		IDEWrite(chnl, ATA_OFF_LBA2, (wordsCount * 2) >> 8);				// Upper Byte of Sector Size
-		
-		IDEWrite(chnl, ATA_OFF_CMD, ATA_COMMAND_PACKET);					//	Send command
-		
-		errVal = IDEPoll(chnl, TRUE);										//	Poll IDE
-		if (errVal) return errVal;
-
-		UINT16* buff = (UINT16*)&packet;									//	Send packet
-		for (SIZE_T i = 0; i < 6; i++) OutWord(chnl->IOBase, buff[i]);
-
-		buff = (UINT16*)destination;
 		for (SIZE_T i = 0; i < count; i++) {
-			IDEWaitIRQ(ctrlIndex, devIndex);
-			errVal = IDEPoll(chnl, TRUE);
-			if (errVal) return errVal;
-			for (SIZE_T j = 0; j < wordsCount; j++) buff[j] = InWord(chnl->IOBase);
-			buff = &buff[wordsCount];
-		}
+			status = IDEATAPIReadSector(ctrlIndex, devIndex, buff, lba);
+			if (status != IDE_TRANSFER_STATUS_SUCCESS) return status;
 
-		IDEWaitIRQ(ctrlIndex, devIndex);
-		while (IDERead(chnl, ATA_OFF_STATUS) & (ATA_STATUS_BUSY | ATA_STATUS_DATA_REQ_READY)) {}
+			buff = &buff[IDE_ATAPI_MAX_TRANSFER_SIZE_PER_OPERATION];
+			lba += IDE_ATAPI_MAX_SECTORS_PER_OPERATION;
+		}
 	}
 
 	return IDE_TRANSFER_STATUS_SUCCESS;
 }
 
-/*
-	Warning: ATAPI devices N/S
-*/
-UINT8 IDEWriteSector(SIZE_T ctrlIndex, SIZE_T devIndex, VOID* source, UINT32 lba, UINT8 count) {
+UINT8 IDEWriteSectors(SIZE_T ctrlIndex, SIZE_T devIndex, VOID* source, UINT32 lba, SIZE_T count) {
+	if (ctrlIndex >= NumberOfCtrls || devIndex >= Ctrls[ctrlIndex].NumberOfDevices) return IDE_TRANSFER_STATUS_NO_DEVICE;
+	
+	UINT8 status;
+	UINT8* buff = (UINT8*)source;
+	IDE_DEVICE* dev = &Ctrls[ctrlIndex].Devices[devIndex];
+	if (dev->Type == IDE_DEV_ATA) {
+		SIZE_T longParts = count / IDE_ATA_MAX_SECTORS_PER_OPERATION;
+		SIZE_T remainder = count % IDE_ATA_MAX_SECTORS_PER_OPERATION;
+
+		for (SIZE_T i = 0; i < longParts; i++) {
+			status = IDEATAWriteSector(ctrlIndex, devIndex, buff, lba, IDE_ATA_MAX_SECTORS_PER_OPERATION);
+			if (status != IDE_TRANSFER_STATUS_SUCCESS) return status;
+
+			buff = &buff[IDE_ATA_MAX_TRANSFER_SIZE_PER_OPERATION];
+			lba += IDE_ATA_MAX_SECTORS_PER_OPERATION;
+		}
+
+		if (remainder) {
+			status = IDEATAWriteSector(ctrlIndex, devIndex, buff, lba, remainder);
+			if (status != IDE_TRANSFER_STATUS_SUCCESS) return status;
+		}
+	}
+	else {
+		for (SIZE_T i = 0; i < count; i++) {
+			status = IDEATAPIWriteSector(ctrlIndex, devIndex, buff, lba);
+			if (status != IDE_TRANSFER_STATUS_SUCCESS) return status;
+
+			buff = &buff[IDE_ATAPI_MAX_TRANSFER_SIZE_PER_OPERATION];
+			lba += IDE_ATAPI_MAX_SECTORS_PER_OPERATION;
+		}
+	}
+
+	return IDE_TRANSFER_STATUS_SUCCESS;
+}
+
+UINT8 IDEATAReadSector(SIZE_T ctrlIndex, SIZE_T devIndex, VOID* destination, UINT32 lba, UINT8 count) {
 	if (ctrlIndex >= NumberOfCtrls || devIndex >= Ctrls[ctrlIndex].NumberOfDevices) return IDE_TRANSFER_STATUS_NO_DEVICE;
 
 	IDE_DEVICE* dev = &Ctrls[ctrlIndex].Devices[devIndex];
 	IDE_CHANNEL* chnl = &Ctrls[ctrlIndex].Channels[dev->ChannelType];
+	if (dev->Type != IDE_DEV_ATA) return IDE_TRANSFER_STATUS_WRONG_DEVICE;
 
-	if (dev->Type == IDE_DEV_ATA) {
-		UINT8 transferMode, cmd;
-		UINT8 lbaIO[6], headIndex, sectorNumber, errVal;
-		UINT16 cylIndex, i, j;
+	UINT8 errVal, transferMode, cmd, headIndex, sectorNumber, lbaIO[6];
+	UINT16 cylIndex;
 
-		IDEWrite(chnl, ATA_OFF_CTRL, chnl->IntDisabled ? ATA_CTRL_IRQ_DISABLED : 0);
+	IDEWrite(chnl, ATA_OFF_CTRL, ATA_CTRL_IRQ_DISABLED);
 
-		if ((lba & 0xFF000000)) {
-			if (!(dev->Capabilities & 0x200)) return IDE_TRANSFER_STATUS_NO_LBA48;	//	lba 28/48 N/S
-			transferMode = TRANSFER_MODE_LBA48;
-			lbaIO[0] = lba & 0xFF;
-			lbaIO[1] = (lba & 0xFF00) >> 8;
-			lbaIO[2] = (lba & 0xFF0000) >> 16;
-			lbaIO[3] = (lba & 0xFF000000) >> 24;
-			lbaIO[4] = lbaIO[5] = headIndex = 0;
-		}
-		else if (dev->Capabilities & 0x200) {
-			transferMode = TRANSFER_MODE_LBA28;
-			lbaIO[0] = lba & 0xFF;
-			lbaIO[1] = (lba & 0xFF00) >> 8;
-			lbaIO[2] = (lba & 0xFF0000) >> 16;
-			lbaIO[3] = lbaIO[4] = lbaIO[5] = 0;
-			headIndex = (lba & 0xF000000) >> 24;
-		}
-		else {
-			transferMode = TRANSFER_MODE_CHS;
-			sectorNumber = (lba % 63) + 1;
-			cylIndex = (lba + 1 - sectorNumber) / (16 * 63);
-			lbaIO[0] = sectorNumber;
-			lbaIO[1] = cylIndex & 0xFF;
-			lbaIO[2] = (cylIndex >> 8) & 0xFF;
-			lbaIO[3] = lbaIO[4] = lbaIO[5] = 0;
-			headIndex = (UINT8)((lba + 1 - sectorNumber) % (16 * 63) / 63);
-		}
+	if ((lba & 0xFF000000)) {
+		if (!(dev->Capabilities & 0x200)) return IDE_TRANSFER_STATUS_NO_LBA;
+		transferMode = TRANSFER_MODE_LBA48;
+		lbaIO[0] = lba & 0xFF;
+		lbaIO[1] = (lba & 0xFF00) >> 8;
+		lbaIO[2] = (lba & 0xFF0000) >> 16;
+		lbaIO[3] = (lba & 0xFF000000) >> 24;
+		lbaIO[4] = lbaIO[5] = headIndex = 0;
+	}
+	else if (dev->Capabilities & 0x200) {
+		transferMode = TRANSFER_MODE_LBA28;
+		lbaIO[0] = lba & 0xFF;
+		lbaIO[1] = (lba & 0xFF00) >> 8;
+		lbaIO[2] = (lba & 0xFF0000) >> 16;
+		lbaIO[3] = lbaIO[4] = lbaIO[5] = 0;
+		headIndex = (lba & 0xF000000) >> 24;
+	}
+	else {
+		transferMode = TRANSFER_MODE_CHS;
+		sectorNumber = (lba % 63) + 1;
+		cylIndex = (lba + 1 - sectorNumber) / (16 * 63);
+		lbaIO[0] = sectorNumber;
+		lbaIO[1] = cylIndex & 0xFF;
+		lbaIO[2] = (cylIndex >> 8) & 0xFF;
+		lbaIO[3] = lbaIO[4] = lbaIO[5] = 0;
+		headIndex = (UINT8)((lba + 1 - sectorNumber) % (16 * 63) / 63);
+	}
 
-		while (IDERead(chnl, ATA_OFF_STATUS) & ATA_STATUS_BUSY) {}
+	while (IDERead(chnl, ATA_OFF_STATUS) & ATA_STATUS_BUSY) {}
 
-		UINT8 hardDrvSelVal = transferMode == TRANSFER_MODE_CHS ? 0xA0 : 0xE0;
-		IDEWrite(chnl, ATA_OFF_HD_DEV_SEL, hardDrvSelVal | (dev->Type << 4) | headIndex);
+	UINT8 hardDrvSelVal = transferMode == TRANSFER_MODE_CHS ? 0xA0 : 0xE0;
+	IDEWrite(chnl, ATA_OFF_HD_DEV_SEL, hardDrvSelVal | (dev->Type << 4) | headIndex);
 
-		if (transferMode == TRANSFER_MODE_LBA48) {
-			IDEWrite(chnl, ATA_OFF_SECTORS_CNT1, 0);
-			IDEWrite(chnl, ATA_OFF_LBA3, lbaIO[3]);
-			IDEWrite(chnl, ATA_OFF_LBA4, lbaIO[4]);
-			IDEWrite(chnl, ATA_OFF_LBA5, lbaIO[5]);
-		}
-		
-		IDEWrite(chnl, ATA_OFF_SECTORS_CNT0, count);
-		IDEWrite(chnl, ATA_OFF_LBA0, lbaIO[0]);
-		IDEWrite(chnl, ATA_OFF_LBA1, lbaIO[1]);
-		IDEWrite(chnl, ATA_OFF_LBA2, lbaIO[2]);
+	if (transferMode == TRANSFER_MODE_LBA48) {
+		IDEWrite(chnl, ATA_OFF_SECTORS_CNT1, 0);
+		IDEWrite(chnl, ATA_OFF_LBA3, lbaIO[3]);
+		IDEWrite(chnl, ATA_OFF_LBA4, lbaIO[4]);
+		IDEWrite(chnl, ATA_OFF_LBA5, lbaIO[5]);
+	}
+	
+	IDEWrite(chnl, ATA_OFF_SECTORS_CNT0, count);
+	IDEWrite(chnl, ATA_OFF_LBA0, lbaIO[0]);
+	IDEWrite(chnl, ATA_OFF_LBA1, lbaIO[1]);
+	IDEWrite(chnl, ATA_OFF_LBA2, lbaIO[2]);
 
-		if (transferMode == TRANSFER_MODE_CHS || transferMode == TRANSFER_MODE_LBA28) cmd = ATA_COMMAND_WRITE_PIO;
-		else if (transferMode == TRANSFER_MODE_LBA48) cmd = ATA_COMMAND_WRITE_PIO_EXT;
-		else return IDE_TRANSFER_STATUS_UNKNOWN_MODE;	//	unknown mode
+	if (transferMode == TRANSFER_MODE_CHS || transferMode == TRANSFER_MODE_LBA28) cmd = ATA_COMMAND_READ_PIO;
+	else if (transferMode == TRANSFER_MODE_LBA48) cmd = ATA_COMMAND_READ_PIO_EXT;
+	else return IDE_TRANSFER_STATUS_UNKNOWN_MODE;
 
-		IDEWrite(chnl, ATA_OFF_CMD, cmd);
-		UINT16* buff = (UINT16*)source;
-		for (j = 0; j < count; j++) {
-			for (i = 0; i < 256; i++) {
-				errVal = IDEPoll(chnl, FALSE);
-				if (errVal) return errVal;
+	IDEWrite(chnl, ATA_OFF_CMD, cmd);
+	UINT16* buff = (UINT16*)destination;
+	for (SIZE_T i = 0; i < count; i++) {
+		for (SIZE_T j = 0; j < IDE_ATA_WORDS_PER_SECTOR; j++) {
+			errVal = IDEPoll(chnl, TRUE);
+			if (errVal) return errVal;
 
-				OutWord(chnl->IOBase, *buff);
-				++buff;
-			}
+			*buff = InWord(chnl->IOBase);
+			++buff;
 		}
 	}
-	else return FALSE;
 
-	IDEPoll(chnl, FALSE);
 	return IDE_TRANSFER_STATUS_SUCCESS;
+}
+
+UINT8 IDEATAWriteSector(SIZE_T ctrlIndex, SIZE_T devIndex, VOID* source, UINT32 lba, UINT8 count) {
+	if (ctrlIndex >= NumberOfCtrls || devIndex >= Ctrls[ctrlIndex].NumberOfDevices) return IDE_TRANSFER_STATUS_NO_DEVICE;
+
+	IDE_DEVICE* dev = &Ctrls[ctrlIndex].Devices[devIndex];
+	IDE_CHANNEL* chnl = &Ctrls[ctrlIndex].Channels[dev->ChannelType];
+	if (dev->Type != IDE_DEV_ATA) return IDE_TRANSFER_STATUS_WRONG_DEVICE;
+
+	UINT8 lbaIO[6], transferMode, cmd, headIndex, sectorNumber, errVal;
+	UINT16 cylIndex;
+
+	IDEWrite(chnl, ATA_OFF_CTRL, ATA_CTRL_IRQ_DISABLED);
+
+	if ((lba & 0xFF000000)) {
+		if (!(dev->Capabilities & 0x200)) return IDE_TRANSFER_STATUS_NO_LBA;
+		transferMode = TRANSFER_MODE_LBA48;
+		lbaIO[0] = lba & 0xFF;
+		lbaIO[1] = (lba & 0xFF00) >> 8;
+		lbaIO[2] = (lba & 0xFF0000) >> 16;
+		lbaIO[3] = (lba & 0xFF000000) >> 24;
+		lbaIO[4] = lbaIO[5] = headIndex = 0;
+	}
+	else if (dev->Capabilities & 0x200) {
+		transferMode = TRANSFER_MODE_LBA28;
+		lbaIO[0] = lba & 0xFF;
+		lbaIO[1] = (lba & 0xFF00) >> 8;
+		lbaIO[2] = (lba & 0xFF0000) >> 16;
+		lbaIO[3] = lbaIO[4] = lbaIO[5] = 0;
+		headIndex = (lba & 0xF000000) >> 24;
+	}
+	else {
+		transferMode = TRANSFER_MODE_CHS;
+		sectorNumber = (lba % 63) + 1;
+		cylIndex = (lba + 1 - sectorNumber) / (16 * 63);
+		lbaIO[0] = sectorNumber;
+		lbaIO[1] = cylIndex & 0xFF;
+		lbaIO[2] = (cylIndex >> 8) & 0xFF;
+		lbaIO[3] = lbaIO[4] = lbaIO[5] = 0;
+		headIndex = (UINT8)((lba + 1 - sectorNumber) % (16 * 63) / 63);
+	}
+
+	while (IDERead(chnl, ATA_OFF_STATUS) & ATA_STATUS_BUSY) {}
+
+	UINT8 hardDrvSelVal = transferMode == TRANSFER_MODE_CHS ? 0xA0 : 0xE0;
+	IDEWrite(chnl, ATA_OFF_HD_DEV_SEL, hardDrvSelVal | (dev->Type << 4) | headIndex);
+
+	if (transferMode == TRANSFER_MODE_LBA48) {
+		IDEWrite(chnl, ATA_OFF_SECTORS_CNT1, 0);
+		IDEWrite(chnl, ATA_OFF_LBA3, lbaIO[3]);
+		IDEWrite(chnl, ATA_OFF_LBA4, lbaIO[4]);
+		IDEWrite(chnl, ATA_OFF_LBA5, lbaIO[5]);
+	}
+	
+	IDEWrite(chnl, ATA_OFF_SECTORS_CNT0, count);
+	IDEWrite(chnl, ATA_OFF_LBA0, lbaIO[0]);
+	IDEWrite(chnl, ATA_OFF_LBA1, lbaIO[1]);
+	IDEWrite(chnl, ATA_OFF_LBA2, lbaIO[2]);
+
+	if (transferMode == TRANSFER_MODE_CHS || transferMode == TRANSFER_MODE_LBA28) cmd = ATA_COMMAND_WRITE_PIO;
+	else if (transferMode == TRANSFER_MODE_LBA48) cmd = ATA_COMMAND_WRITE_PIO_EXT;
+	else return IDE_TRANSFER_STATUS_UNKNOWN_MODE;	//	unknown mode
+
+	IDEWrite(chnl, ATA_OFF_CMD, cmd);
+	UINT16* buff = (UINT16*)source;
+	for (SIZE_T i = 0; i < count; i++) {
+		for (SIZE_T j = 0; j < IDE_ATA_WORDS_PER_SECTOR; j++) {
+			errVal = IDEPoll(chnl, FALSE);
+			if (errVal) return errVal;
+
+			OutWord(chnl->IOBase, *buff);
+			++buff;
+		}
+	}
+
+	return IDE_TRANSFER_STATUS_SUCCESS;
+}
+
+UINT8 IDEATAPIReadSector(SIZE_T ctrlIndex, SIZE_T devIndex, VOID* destination, UINT32 lba) {
+	if (ctrlIndex >= NumberOfCtrls || devIndex >= Ctrls[ctrlIndex].NumberOfDevices) return IDE_TRANSFER_STATUS_NO_DEVICE;
+
+	IDE_DEVICE* dev = &Ctrls[ctrlIndex].Devices[devIndex];
+	IDE_CHANNEL* chnl = &Ctrls[ctrlIndex].Channels[dev->ChannelType];
+	if (dev->Type != IDE_DEV_ATAPI) return IDE_TRANSFER_STATUS_WRONG_DEVICE;
+	
+	ATAPI_PACKET packet = { ATAPI_COMMAND_READ, 0, lba, 1, 0, 0 };
+	UINT8 errVal;
+
+	IDEWaitIRQ(ctrlIndex, devIndex);
+	IDEWrite(chnl, ATA_OFF_CTRL, chnl->IntDisabled = FALSE);
+
+	IDEWrite(chnl, ATA_OFF_HD_DEV_SEL, dev->Type << 4);
+	for (SIZE_T i = 0; i < 4; i++) IDERead(chnl, ATA_OFF_ALT_STATUS);
+
+	IDEWrite(chnl, ATA_OFF_FEATURES, 0);								//	PIO
+
+	IDEWrite(chnl, ATA_OFF_LBA1, IDE_ATAPI_SECTOR_SIZE & 0xFF);			// Lower Byte of Sector Size
+	IDEWrite(chnl, ATA_OFF_LBA2, IDE_ATAPI_SECTOR_SIZE >> 8);			// Upper Byte of Sector Size
+	
+	IDEWrite(chnl, ATA_OFF_CMD, ATA_COMMAND_PACKET);					//	Send command
+	
+	errVal = IDEPoll(chnl, TRUE);										//	Poll IDE
+	if (errVal) return errVal;
+
+	IDEATAPISendPacket(ctrlIndex, devIndex, &packet);
+
+	UINT16* buff = (UINT16*)destination;
+	IDEWaitIRQ(ctrlIndex, devIndex);
+
+	errVal = IDEPoll(chnl, TRUE);
+	if (errVal) return errVal;
+	
+	for (SIZE_T j = 0; j < IDE_ATAPI_WORDS_PER_SECTOR; j++) buff[j] = InWord(chnl->IOBase);
+
+	IDEWaitIRQ(ctrlIndex, devIndex);
+	while (IDERead(chnl, ATA_OFF_STATUS) & (ATA_STATUS_BUSY | ATA_STATUS_DATA_REQ_READY)) {}
+	return IDE_TRANSFER_STATUS_SUCCESS;
+}
+
+/*
+	NOT SUPPORTED IN THIS VERSION OF KERNEL!
+*/
+UINT8 IDEATAPIWriteSector(SIZE_T, SIZE_T, VOID*, UINT32) {
+	return IDE_TRANSFER_STATUS_UNKNOWN_MODE;
+}
+
+BOOL IDEATAPISendPacket(SIZE_T ctrlIndex, SIZE_T devIndex, const ATAPI_PACKET* packet) {
+	if (ctrlIndex >= NumberOfCtrls || devIndex >= Ctrls[ctrlIndex].NumberOfDevices) return FALSE;
+
+	IDE_DEVICE* dev = &Ctrls[ctrlIndex].Devices[devIndex];
+	IDE_CHANNEL* chnl = &Ctrls[ctrlIndex].Channels[dev->ChannelType];
+	if (dev->Type != IDE_DEV_ATAPI) return FALSE;
+
+	VOID* tmpBuff = (VOID*)((SIZE_T)packet);
+	UINT16* buffer = (UINT16*)tmpBuff;
+	for (SIZE_T i = 0; i < 6; i++) OutWord(chnl->IOBase, buffer[i]);
+	return TRUE;
 }
 
 /*

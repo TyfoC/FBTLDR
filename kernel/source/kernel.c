@@ -74,9 +74,32 @@ extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 	}
 
 	//	IDE
-	if (!InstallIDE()) PrintFormatted("PCI IDE controllers not found or failed to initialize\r\n", BIOS_COLOR_YELLOW);
-	else PrintFormatted("Number of PCI IDE controllers: %u\r\n", BIOS_COLOR_WHITE, IDEGetCtrlsCount());
+	if (!InstallIDE()) PutString("PCI IDE controllers not found or failed to initialize\r\n", BIOS_COLOR_YELLOW);
+	else {
+		SIZE_T numOfCtrls = IDEGetCtrlsCount();
+		PrintFormatted("Number of PCI IDE controllers: %u\r\n", BIOS_COLOR_WHITE, numOfCtrls);
 
+		IDE_CONTROLLER ctrl;
+		UINT8 sectorData[IDE_ATAPI_SECTOR_SIZE];
+		for (SIZE_T i = 0; i < numOfCtrls; i++) {
+			if (!IDEGetCtrl(i, &ctrl)) continue;
+
+			for (SIZE_T j = 0; j < ctrl.NumberOfDevices; j++) {
+				PrintFormatted(
+					"CTRL#%u->DEV#%u: T: %u, I: %u\r\n", BIOS_COLOR_WHITE, i, j,
+					ctrl.Devices[j].Type, ctrl.Devices[j].Index
+				);
+
+				if (IDEReadSectors(i, j, sectorData, 0, 1)) PutString("FAILED TO READ!\r\n", BIOS_COLOR_LIGHT_RED);
+				else PrintHex(sectorData, ctrl.Devices[j].Type == IDE_DEV_ATA ? IDE_ATA_SECTOR_SIZE : IDE_ATAPI_SECTOR_SIZE, BIOS_COLOR_YELLOW);
+			}
+
+			if (ctrl.Devices) FreePhysicalMemory(ctrl.Devices);
+			if (ctrl.Channels) FreePhysicalMemory(ctrl.Channels);
+		}
+	}
+
+	STOP();
 	ShutdownKernel(15);
 	STOP();
 }
