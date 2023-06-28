@@ -11,6 +11,7 @@
 #include "ps2-ctrl.h"
 #include "ps2-kbd.h"
 #include "ps2-mouse.h"
+#include "ide.h"
 
 #define KERNEL_BASE_ADDRESS							((SIZE_T)&__PTR_KERNEL_BASE_ADDRESS__)
 #define KERNEL_END_ADDRESS							((SIZE_T)&__PTR_KERNEL_END_ADDRESS__)

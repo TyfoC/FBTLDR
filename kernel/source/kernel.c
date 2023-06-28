@@ -26,6 +26,17 @@ extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 
 	InstallPMM(memMap, memMapLen);
 	memMapLen = GetMemoryMapLength();
+	SIZE_T usableMemSize = 0, reservedMemSize;
+	MEMORY_REGION_DESCRIPTOR mrd;
+	for (SIZE_T i = 0; i < memMapLen; i++) {
+		GetMemoryRegion(i, &mrd);
+		if (mrd.Type == MEMORY_REGION_TYPE_USABLE || mrd.Type == MEMORY_REGION_TYPE_RECLAIMABLE) usableMemSize += mrd.Size;
+		else reservedMemSize += mrd.Size;
+	}
+
+	PrintFormatted("Memory regions detected: %u\r\n", BIOS_COLOR_WHITE, memMapLen);
+	PrintFormatted("Size of usable memory: 0x%xu bytes\r\n", BIOS_COLOR_WHITE, usableMemSize);
+	PrintFormatted("Size of reserved memory: 0x%xu bytes\r\n", BIOS_COLOR_WHITE, reservedMemSize);
 
 	//	GDT, KernelCodeSegValue, KernelDataSegValue
 	InitGDTR(KernelGDT, KERNEL_GDT_ENTRIES_COUNT, &KernelGDTRegister);
@@ -42,48 +53,29 @@ extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 	InstallHardwareIntHandlers(KernelIDT, KernelCodeSegValue);
 	ENABLE_HARDWARE_INTERRUPTS();
 
-	//	FPU
-	// InstallFPU();
-
 	//	PIT
 	InstallPIT(PIT_SOFTWARE_FREQUENCY);
 
 	//	PCI
 	InstallPCI();
+	PrintFormatted("Number of PCI devices: %u\r\n", BIOS_COLOR_WHITE, PCIGetDevicesCount());
 
 	//	ACPI
 	if (!InstallACPI()) PutString("Warning: failed to initialize ACPI driver, further work may lead to failures!\r\n", BIOS_COLOR_YELLOW);
+	else PrintFormatted("ACPI version: %u.%u\r\n", BIOS_COLOR_WHITE, ACPIGetMajorVersion(), ACPIGetMinorVersion() & 0x0F);
 
-	if (!InstallPS2Ctrl()) {
-		PutString("Error: failed to initialize PS/2 Controller!\r\n", BIOS_COLOR_LIGHT_RED);
-		ShutdownKernel(5);
-	}
+	if (!InstallPS2Ctrl()) PutString("PS/2 controller not found or failed to initialize\r\n", BIOS_COLOR_YELLOW);
 	else {
-		if (!PS2DevsInit()) {
-			PutString("Error: failed to initialize PS/2 devices!\r\n", BIOS_COLOR_LIGHT_RED);
-			ShutdownKernel(5);
-		}
-
-		BOOL ps2KbdInstalled = InstallPS2Kbd();
-		if (!ps2KbdInstalled) PutString("Warning: failed to initialize PS/2 kbd driver!\r\n", BIOS_COLOR_LIGHT_RED);
-
-		BOOL ps2MouseInstalled = InstallPS2Mouse();
-		if (!ps2MouseInstalled && !ps2KbdInstalled) {
-			PutString("Error: failed to initialize PS/2 mouse!\r\n", BIOS_COLOR_LIGHT_RED);
-			ShutdownKernel(5);
+		if (!PS2DevsInit()) PutString("PS/2 devices not found or failed to initialize\r\n", BIOS_COLOR_YELLOW);
+		else {
+			if (!InstallPS2Kbd()) PutString("PS/2 keyboard not found or failed to initialize\r\n", BIOS_COLOR_YELLOW);
+			if (!InstallPS2Mouse()) PutString("PS/2 mouse not found or failed to initialize\r\n", BIOS_COLOR_YELLOW);
 		}
 	}
 
-	PCI_DEVICE pciDev;
-	SIZE_T pciDevsCount = PCIGetDevicesCount();
-	PutString("PCI Devises:\r\n", BIOS_COLOR_DARK_GRAY);
-	for (SIZE_T i = 0; i < pciDevsCount; i++) {
-		PCIGetDevice(i, &pciDev);
-		PrintFormatted(
-			"%u) %u->%u->%u: VenID: 0x%xu, DevID: 0x%xu, Class: 0x%xu, SubClass: 0x%xu\r\n", BIOS_COLOR_DARK_GRAY, i + 1,
-			pciDev.Bus, pciDev.Slot, pciDev.Function, pciDev.VendorID, pciDev.DeviceID, pciDev.Class, pciDev.SubClass
-		);
-	}
+	//	IDE
+	if (!InstallIDE()) PrintFormatted("PCI IDE controllers not found or failed to initialize\r\n", BIOS_COLOR_YELLOW);
+	else PrintFormatted("Number of PCI IDE controllers: %u\r\n", BIOS_COLOR_WHITE, IDEGetCtrlsCount());
 
 	ShutdownKernel(15);
 	STOP();

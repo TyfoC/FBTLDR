@@ -20,6 +20,12 @@
 #define PCI_WORD_INDEX_HDR_TYPE_BIST	0x07
 #define PCI_WORD_INDEX_SEC_BUS_PRIM_BUS	0x0C
 
+#define PCI_LONG_INDEX_BAR0				0x04
+#define PCI_LONG_INDEX_BAR1				0x05
+#define PCI_LONG_INDEX_BAR2				0x06
+#define PCI_LONG_INDEX_BAR3				0x07
+#define PCI_LONG_INDEX_BAR4				0x08
+
 #define PCI_HEADER_TYPE_MF				0x80
 #define PCI_INVALID_VENDOR_ID			0xFFFF
 
@@ -62,7 +68,13 @@ UINT16 PCIGetVendorID(UINT8 bus, UINT8 slot, UINT8 function);
 UINT16 PCIGetDeviceID(UINT8 bus, UINT8 slot, UINT8 function);
 UINT8 PCIGetClass(UINT8 bus, UINT8 slot, UINT8 function);
 UINT8 PCIGetSubclass(UINT8 bus, UINT8 slot, UINT8 function);
+UINT8 PCIGetProgIf(UINT8 bus, UINT8 slot, UINT8 function);
 UINT8 PCIGetHeaderType(UINT8 bus, UINT8 slot, UINT8 function);
+UINT32 PCIGetBAR0(UINT8 bus, UINT8 slot, UINT8 function);
+UINT32 PCIGetBAR1(UINT8 bus, UINT8 slot, UINT8 function);
+UINT32 PCIGetBAR2(UINT8 bus, UINT8 slot, UINT8 function);
+UINT32 PCIGetBAR3(UINT8 bus, UINT8 slot, UINT8 function);
+UINT32 PCIGetBAR4(UINT8 bus, UINT8 slot, UINT8 function);
 UINT8 PCIGetSecondaryBus(UINT8 bus, UINT8 slot, UINT8 function);
 
 #endif

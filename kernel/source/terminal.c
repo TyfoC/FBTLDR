@@ -74,6 +74,16 @@ VOID PutString(const CHAR* str, BIOS_COLOR strColor) {
 	for (SIZE_T i = 0; str[i]; i++) PutChar(str[i], strColor);
 }
 
+VOID PrintHex(const UINT8* hexArray, SIZE_T length, BIOS_COLOR color) {
+	if (CursorOffset % TERMINAL_WIDTH_SIZE) PutString("\r\n", color);
+	for (SIZE_T i = 0; i < length; i++) {
+		PutString("0x", color);
+		
+		if (hexArray[i] < 0x10) PutChar('0', color);
+		PrintFormatted("%xu ", color, hexArray[i]);
+	}
+}
+
 /*
 	%% - %
 	%c - char from args

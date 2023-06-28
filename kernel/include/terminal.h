@@ -21,6 +21,7 @@ VOID FixCursorPosition(VOID);
 CHAR* GetTerminalBuffer(VOID);
 VOID PutChar(CHAR character, BIOS_COLOR characterColor);
 VOID PutString(const CHAR* str, BIOS_COLOR strColor);
+VOID PrintHex(const UINT8* hexArray, SIZE_T length, BIOS_COLOR color);
 VOID PrintFormatted(const CHAR* format, BIOS_COLOR defaultColor, ...);
 CHAR GetTerminalCharByOffset(VOID);
 BIOS_COLOR GetTerminalCharColorByOffset(VOID);

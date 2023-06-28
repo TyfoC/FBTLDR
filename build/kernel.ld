@@ -13,7 +13,7 @@ SECTIONS {
 	}
 
 	.stack : ALIGN(512) {
-		. = . + 4K;
+		. = . + 16K;
 		__PTR_STACK_TOP_ADDRESS__ = .;
 	}
 

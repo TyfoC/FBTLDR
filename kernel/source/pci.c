@@ -176,8 +176,32 @@ UINT8 PCIGetSubclass(UINT8 bus, UINT8 slot, UINT8 function) {
 	return (UINT8)(PCIConfigReadWord(bus, slot, function, PCI_WORD_INDEX_SUB_CLS_CLS) & 0xFF);
 }
 
+UINT8 PCIGetProgIf(UINT8 bus, UINT8 slot, UINT8 function) {
+	return (UINT8)((PCIConfigReadWord(bus, slot, function, PCI_WORD_INDEX_REV_ID_PROG_IF) >> 8) & 0xFF);
+}
+
 UINT8 PCIGetHeaderType(UINT8 bus, UINT8 slot, UINT8 function) {
 	return (UINT8)(PCIConfigReadWord(bus, slot, function, PCI_WORD_INDEX_HDR_TYPE_BIST) & 0xFF);
+}
+
+UINT32 PCIGetBAR0(UINT8 bus, UINT8 slot, UINT8 function) {
+	return PCIConfigReadLong(bus, slot, function, PCI_LONG_INDEX_BAR0);
+}
+
+UINT32 PCIGetBAR1(UINT8 bus, UINT8 slot, UINT8 function) {
+	return PCIConfigReadLong(bus, slot, function, PCI_LONG_INDEX_BAR1);
+}
+
+UINT32 PCIGetBAR2(UINT8 bus, UINT8 slot, UINT8 function) {
+	return PCIConfigReadLong(bus, slot, function, PCI_LONG_INDEX_BAR2);
+}
+
+UINT32 PCIGetBAR3(UINT8 bus, UINT8 slot, UINT8 function) {
+	return PCIConfigReadLong(bus, slot, function, PCI_LONG_INDEX_BAR3);
+}
+
+UINT32 PCIGetBAR4(UINT8 bus, UINT8 slot, UINT8 function) {
+	return PCIConfigReadLong(bus, slot, function, PCI_LONG_INDEX_BAR4);
 }
 
 UINT8 PCIGetSecondaryBus(UINT8 bus, UINT8 slot, UINT8 function) {
