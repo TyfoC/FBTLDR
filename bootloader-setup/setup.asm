@@ -7,6 +7,8 @@ org 0x7c00
 
 SetupBegin:
 	jmp 0x0000:SetupRegisters
+BootloaderSignature:			dd	0x52544246		;	`FBTR` - FBTLDR
+BootloaderVersion:				dd	0x00000000
 SetupRegisters:
 	mov ax, 0
 	mov ds, ax
@@ -71,3 +73,12 @@ MainEnd:
 KernelBegin:
 incbin "kernel.bin"
 KernelEnd:
+
+UserConfigBegin:
+VideoModeType:			dw 2
+VideoModeIndex:			dw 0
+VideoModeWidth:			dw 800
+VideoModeHeight:		dw 600
+VideoModeBitsPerPixel:	dw 24
+VideoModeFuzzy:			dw 1
+KernelFileType:			dw 0xFFFF

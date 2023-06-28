@@ -16,7 +16,7 @@
             "intelliSenseMode": "windows-gcc-x64"
         },
         {
-            "name": "osdev",
+            "name": "osdev-kernel",
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/kernel/include"
@@ -32,6 +32,25 @@
             "intelliSenseMode": "linux-gcc-x86",
             "compilerArgs": [
                 "-m16 -ffreestanding -O0"
+            ]
+        },
+        {
+            "name": "osdev-bootloader",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/bootloader-main/include"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "C:\\Installed Programs\\gcc\\bin\\gcc.exe",
+            "cStandard": "c17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "windows-gcc-x86",
+            "compilerArgs": [
+                "-m16 -O0 -ffreestanding"
             ]
         }
     ],

@@ -2,6 +2,7 @@
 #ifndef KERNEL
 #define KERNEL
 
+#include "user-config.h"
 #include "gdt.h"
 #include "pci.h"
 
@@ -28,6 +29,7 @@ typedef struct ATTRIB_PACKED KernelInitializationData {
 	uint32_t	GdtCodeSegIndex;
 	uint32_t	GdtDataSegIndex;
 	uint32_t	PciSupportBits;
+	UserConfig	UserKernelConfig;
 } KernelInitializationData;
 
 extern GdtRegister KernelGdtRegister;

@@ -2,7 +2,6 @@
 
 extern VOID KernelMain(KERNEL_INIT_DATA* initData) {
 	CopyMemory(KernelGDT, initData->GDTPointer, sizeof(GDT_ENTRY) * KERNEL_GDT_ENTRIES_COUNT);
-	SetCursorPosition((STRING_POSITION){ 16, 0 });
 
 	//	PMM
 	MEMORY_REGION_DESCRIPTOR* memMap = (MEMORY_REGION_DESCRIPTOR*)initData->MemoryMapAddress;
