@@ -36,8 +36,8 @@
 #define ATA_COMMAND_PACKET					0xA0
 #define ATA_COMMAND_IDENTIFY_PACKET			0xA1
 #define ATA_COMMAND_IDENTIFY				0xEC
-#define ATA_COMMAND_READ					0xA8	//	ATAPI
-#define ATA_COMMAND_EJECT					0x1B	//	ATAPI
+#define ATAPI_COMMAND_READ					0xA8	//	ATAPI
+#define ATAPI_COMMAND_EJECT					0x1B	//	ATAPI
 
 #define ATA_CTRL_IRQ_DISABLED				0x02	//	nIEN (no interrupt enabled)
 
@@ -107,6 +107,9 @@
 
 #define IDE_MAX_SECTORS_PER_OPERATION		0xFF
 
+#define IDE_PRIMARY_IRQ						0x0E
+#define IDE_SECONDARY_IRQ					0x0F
+
 typedef struct {
 	UINT16	Type;					//	IDE_CHNL_TYPE_*
 	UINT16	IOBase;
@@ -134,11 +137,23 @@ typedef struct {
 	SIZE_T			NumberOfChannels;
 } IDE_CONTROLLER;
 
+typedef struct ATTRIB(__packed__) {
+	UINT8	Operation;
+	UINT8	Reserved0;
+	UINT32	LBA;
+	UINT32	Length;
+	UINT8	Reserved1;
+	UINT8	CtrlCode;
+} ATAPI_PACKET;
+
 BOOL InstallIDE(VOID);
 BOOL IDEGetCtrl(SIZE_T index, IDE_CONTROLLER* ctrl);
 BOOL IDEGetChnl(SIZE_T ctrlIndex, SIZE_T chnlType, IDE_CHANNEL* chnl);
 BOOL IDEGetDev(SIZE_T ctrlIndex, SIZE_T devIndex, IDE_DEVICE* dev);
 BOOL IDEGetChnlDev(SIZE_T ctrlIndex, SIZE_T chnlType, SIZE_T devType, IDE_DEVICE* dev);
+BOOL IDEWaitIRQ(SIZE_T ctrlIndex, SIZE_T devIndex);
+BOOL IDEIRQInvoked(SIZE_T ctrlIndex, SIZE_T devIndex);
+BOOL IDEClearIRQ(SIZE_T ctrlIndex, SIZE_T devIndex);
 SIZE_T IDEGetCtrlsCount(VOID);
 SIZE_T IDEGetChnlsCount(SIZE_T ctrlIndex);
 SIZE_T IDEGetDevsCount(SIZE_T ctrlIndex);
